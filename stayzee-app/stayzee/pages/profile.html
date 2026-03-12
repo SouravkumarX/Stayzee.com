@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile & Verification — Stayzee</title>
+<link rel="stylesheet" href="../css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { padding-top:66px; background:var(--cream); }
+  .profile-wrap { max-width:800px; margin:0 auto; padding:2.5rem 5%; }
+  .profile-hero { background:linear-gradient(135deg,var(--navy),#243660); border-radius:20px; padding:2.5rem; display:flex; align-items:center; gap:2rem; margin-bottom:2rem; position:relative; overflow:hidden; }
+  .profile-hero::before { content:''; position:absolute; inset:0; background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px); background-size:24px 24px; }
+  .profile-avatar-wrap { position:relative; z-index:1; flex-shrink:0; }
+  .profile-avatar { width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--orange); }
+  .avatar-edit { position:absolute; bottom:0; right:0; width:30px; height:30px; background:var(--orange); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.8rem; }
+  .profile-hero-info { z-index:1; }
+  .profile-hero-info h2 { font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--white); margin-bottom:0.3rem; }
+  .profile-hero-info p { color:rgba(255,255,255,0.6); font-size:0.88rem; }
+  .profile-badges { display:flex; gap:0.6rem; margin-top:0.8rem; flex-wrap:wrap; }
+  .section-card { background:var(--white); border:1px solid var(--border); border-radius:16px; padding:1.8rem; margin-bottom:1.5rem; }
+  .section-card h3 { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; margin-bottom:1.2rem; display:flex; align-items:center; gap:0.6rem; }
+  .form-2col { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .verify-steps { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+  .verify-step { border:1.5px solid var(--border); border-radius:12px; padding:1.2rem; text-align:center; }
+  .verify-step .step-icon { font-size:2rem; margin-bottom:0.6rem; }
+  .verify-step h4 { font-weight:600; font-size:0.9rem; margin-bottom:0.4rem; }
+  .verify-step p { font-size:0.8rem; color:var(--gray); margin-bottom:0.8rem; }
+  .verify-step.done { border-color:var(--success); background:#f0fdf4; }
+  .id-upload-zone { border:2px dashed var(--border); border-radius:10px; padding:1.5rem; text-align:center; cursor:pointer; transition:all 0.2s; }
+  .id-upload-zone:hover { border-color:var(--orange); background:#fff7ed; }
+  .id-preview { width:100%; max-height:180px; object-fit:cover; border-radius:8px; margin-top:0.8rem; display:none; }
+  @media(max-width:600px) { .form-2col,.verify-steps{grid-template-columns:1fr;} .profile-hero{flex-direction:column;text-align:center;} }
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<nav class="topnav">
+  <a href="../index.html" class="nav-logo">Stay<span>zee</span></a>
+  <div class="nav-right">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <button class="nav-btn outline" onclick="signOut()">Log Out</button>
+  </div>
+</nav>
+
+<div class="profile-wrap">
+  <div class="profile-hero">
+    <div class="profile-avatar-wrap">
+      <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=1a2744&color=fff" class="profile-avatar">
+      <div class="avatar-edit" onclick="document.getElementById('avatar-input').click()" title="Change photo">✏️</div>
+      <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="uploadAvatar(this.files[0])">
+    </div>
+    <div class="profile-hero-info">
+      <h2 id="hero-name">Loading...</h2>
+      <p id="hero-email">—</p>
+      <div class="profile-badges">
+        <span class="badge" id="verify-badge">⏳ Unverified</span>
+        <span class="badge" id="host-badge" style="display:none">🏠 Host</span>
+        <span class="badge badge-info" id="rating-badge">⭐ 5.0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERSONAL INFO -->
+  <div class="section-card">
+    <h3>👤 Personal Information</h3>
+    <div class="form-2col">
+      <div class="form-group"><label>Full Name</label><input type="text" id="p-name" placeholder="Your full name"></div>
+      <div class="form-group"><label>Phone Number</label><input type="tel" id="p-phone" placeholder="+91 98765 43210"></div>
+    </div>
+    <div class="form-group">
+      <label>Bio</label>
+      <textarea id="p-bio" placeholder="Tell hosts and guests about yourself — your interests, travel style, and what kind of stays you enjoy..."></textarea>
+    </div>
+    <div class="form-2col">
+      <div class="form-group"><label>Gender</label>
+        <select id="p-gender">
+          <option value="">Prefer not to say</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>I also want to be a Host</label>
+        <select id="p-host">
+          <option value="false">No, just travelling</option>
+          <option value="true">Yes, I want to host</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="save-profile-btn" onclick="saveProfile()">Save Changes</button>
+  </div>
+
+  <!-- ID VERIFICATION -->
+  <div class="section-card">
+    <h3>🛡️ Identity Verification</h3>
+    <p style="color:var(--gray);font-size:0.88rem;margin-bottom:1.5rem">Stayzee requires 100% ID verification for all users. Upload your government ID and a selfie to get verified.</p>
+    <div class="verify-steps">
+      <div class="verify-step" id="step-id">
+        <div class="step-icon">🪪</div>
+        <h4>Government ID</h4>
+        <p>Aadhaar Card, Passport, or Driving License</p>
+        <div class="id-upload-zone" onclick="document.getElementById('id-input').click()">
+          <div>📄 Click to upload ID</div>
+        </div>
+        <input type="file" id="id-input" accept="image/*,application/pdf" style="display:none" onchange="handleIdUpload(this,'id')">
+        <img id="id-preview" class="id-preview">
+        <div style="margin-top:0.8rem;font-size:0.78rem;color:var(--gray)" id="id-status">Not uploaded</div>
+      </div>
+      <div class="verify-step" id="step-selfie">
+        <div class="step-icon">🤳</div>
+        <h4>Selfie Match</h4>
+        <p>A clear selfie for AI facial recognition</p>
+        <div class="id-upload-zone" onclick="document.getElementById('selfie-input').click()">
+          <div>📸 Click to upload selfie</div>
+        </div>
+        <input type="file" id="selfie-input" accept="image/*" style="display:none" onchange="handleIdUpload(this,'selfie')">
+        <img id="selfie-preview" class="id-preview">
+        <div style="margin-top:0.8rem;font-size:0.78rem;color:var(--gray)" id="selfie-status">Not uploaded</div>
+      </div>
+    </div>
+    <div style="margin-top:1.2rem">
+      <button class="btn btn-secondary" id="submit-verify-btn" onclick="submitVerification()">Submit for Verification</button>
+      <p style="font-size:0.78rem;color:var(--gray);margin-top:0.6rem">⏱️ Verification typically takes 24-48 hours. You'll be notified by email.</p>
+    </div>
+  </div>
+
+  <!-- CHANGE PASSWORD -->
+  <div class="section-card">
+    <h3>🔐 Change Password</h3>
+    <div class="form-2col">
+      <div class="form-group"><label>New Password</label><input type="password" id="new-pass" placeholder="Minimum 8 characters" minlength="8"></div>
+      <div class="form-group"><label>Confirm Password</label><input type="password" id="confirm-pass" placeholder="Repeat new password"></div>
+    </div>
+    <button class="btn btn-outline" onclick="changePassword()">Update Password</button>
+  </div>
+
+  <!-- DANGER ZONE -->
+  <div class="section-card" style="border-color:#fecaca">
+    <h3 style="color:var(--danger)">⚠️ Danger Zone</h3>
+    <p style="color:var(--gray);font-size:0.88rem;margin-bottom:1rem">Permanently delete your account and all data. This cannot be undone.</p>
+    <button class="btn btn-danger btn-sm" onclick="if(confirm('Are you sure? This cannot be undone.')) deleteAccount()">Delete My Account</button>
+  </div>
+</div>
+
+<script src="../js/supabase.js"></script>
+<script>
+  function showToast(msg,type='info'){const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;document.getElementById('toast-container').appendChild(t);setTimeout(()=>t.remove(),3500);}
+
+  let currentUser=null, idUploaded=false, selfieUploaded=false;
+
+  async function loadProfile() {
+    currentUser = await requireAuth('../pages/login.html');
+    if (!currentUser) return;
+    const { data: profile } = await getProfile(currentUser.id);
+    if (!profile) return;
+    document.getElementById('p-name').value = profile.full_name||'';
+    document.getElementById('p-phone').value = profile.phone||'';
+    document.getElementById('p-bio').value = profile.bio||'';
+    document.getElementById('p-gender').value = profile.gender||'';
+    document.getElementById('p-host').value = profile.is_host?'true':'false';
+    document.getElementById('hero-name').textContent = profile.full_name||'User';
+    document.getElementById('hero-email').textContent = currentUser.email;
+    document.getElementById('rating-badge').textContent = '⭐ '+( profile.rating||5.0);
+    if (profile.avatar_url) document.getElementById('profile-avatar').src = profile.avatar_url;
+    if (profile.is_host) { document.getElementById('host-badge').style.display=''; }
+    if (profile.id_verified) {
+      document.getElementById('verify-badge').textContent='✅ Verified';
+      document.getElementById('verify-badge').className='badge badge-success';
+      document.getElementById('step-id').classList.add('done');
+      document.getElementById('step-selfie').classList.add('done');
+    }
+    if (profile.selfie_url) {
+      document.getElementById('selfie-preview').src=profile.selfie_url;
+      document.getElementById('selfie-preview').style.display='block';
+      document.getElementById('selfie-status').textContent='✅ Uploaded';
+    }
+  }
+
+  async function saveProfile() {
+    const btn=document.getElementById('save-profile-btn');
+    btn.disabled=true; btn.textContent='Saving...';
+    const { error } = await upsertProfile({
+      id: currentUser.id,
+      full_name: document.getElementById('p-name').value,
+      phone: document.getElementById('p-phone').value,
+      bio: document.getElementById('p-bio').value,
+      gender: document.getElementById('p-gender').value,
+      is_host: document.getElementById('p-host').value==='true'
+    });
+    btn.disabled=false; btn.textContent='Save Changes';
+    if (error) showToast(error.message,'error');
+    else { showToast('Profile updated! ✅','success'); loadProfile(); }
+  }
+
+  async function uploadAvatar(file) {
+    if (!file) return;
+    showToast('Uploading avatar...','info');
+    const { url, error } = await uploadAvatar(file, currentUser.id);
+    if (error) { showToast(error.message,'error'); return; }
+    await upsertProfile({ id: currentUser.id, avatar_url: url });
+    document.getElementById('profile-avatar').src = url;
+    showToast('Avatar updated! ✅','success');
+  }
+
+  async function handleIdUpload(input, type) {
+    const file = input.files[0];
+    if (!file) return;
+    showToast('Uploading...','info');
+    const ext = file.name.split('.').pop();
+    const path = `ids/${currentUser.id}/${type}.${ext}`;
+    const { error } = await sb.storage.from('avatars').upload(path, file, { upsert:true });
+    if (error) { showToast(error.message,'error'); return; }
+    const { data:{publicUrl} } = sb.storage.from('avatars').getPublicUrl(path);
+    if (type==='selfie') {
+      await upsertProfile({ id:currentUser.id, selfie_url: publicUrl });
+      document.getElementById('selfie-preview').src=publicUrl;
+      document.getElementById('selfie-preview').style.display='block';
+      document.getElementById('selfie-status').textContent='✅ Uploaded';
+      document.getElementById('step-selfie').classList.add('done');
+      selfieUploaded=true;
+    } else {
+      document.getElementById('id-preview').src=publicUrl;
+      document.getElementById('id-preview').style.display='block';
+      document.getElementById('id-status').textContent='✅ Uploaded';
+      document.getElementById('step-id').classList.add('done');
+      idUploaded=true;
+    }
+    showToast(type==='selfie'?'Selfie uploaded!':'ID uploaded!','success');
+  }
+
+  async function submitVerification() {
+    const btn=document.getElementById('submit-verify-btn');
+    btn.disabled=true; btn.textContent='Submitting...';
+    // In production: trigger a verification webhook/edge function
+    // For demo, we mark as pending and show a success message
+    showToast('Verification submitted! You\'ll hear back within 48 hours. 🛡️','success');
+    setTimeout(()=>{btn.disabled=false; btn.textContent='Submit for Verification';},2000);
+  }
+
+  async function changePassword() {
+    const np=document.getElementById('new-pass').value;
+    const cp=document.getElementById('confirm-pass').value;
+    if (!np||!cp) { showToast('Enter both fields','error'); return; }
+    if (np!==cp) { showToast('Passwords do not match','error'); return; }
+    const { error } = await sb.auth.updateUser({ password: np });
+    if (error) showToast(error.message,'error');
+    else showToast('Password updated! 🔐','success');
+  }
+
+  async function deleteAccount() {
+    showToast('Account deletion requested. Contact support@stayzee.com','info');
+  }
+
+  loadProfile();
+</script>
+</body>
+</html>

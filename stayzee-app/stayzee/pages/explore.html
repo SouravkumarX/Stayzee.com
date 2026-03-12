@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explore Stays — Stayzee</title>
+<link rel="stylesheet" href="../css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { padding-top:66px; }
+  .search-hero { background:var(--navy); padding:3rem 5%; text-align:center; position:relative; overflow:hidden; }
+  .search-hero::before { content:''; position:absolute; inset:0; background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px); background-size:28px 28px; }
+  .search-hero h1 { font-family:'Playfair Display',serif; font-size:2.2rem; color:var(--white); margin-bottom:0.5rem; position:relative; z-index:1; }
+  .search-hero p  { color:rgba(255,255,255,0.6); margin-bottom:2rem; position:relative; z-index:1; }
+  .search-bar { display:flex; gap:0.8rem; max-width:700px; margin:0 auto; position:relative; z-index:1; flex-wrap:wrap; }
+  .search-bar input, .search-bar select { flex:1; min-width:140px; padding:0.85rem 1.2rem; border-radius:10px; border:none; font-family:'DM Sans',sans-serif; font-size:0.92rem; outline:none; }
+  .search-bar button { padding:0.85rem 1.8rem; border-radius:10px; border:none; background:var(--orange); color:var(--white); font-family:'DM Sans',sans-serif; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .explore-layout { max-width:1200px; margin:0 auto; padding:2.5rem 5%; display:grid; grid-template-columns:260px 1fr; gap:2rem; }
+  .filters-panel { position:sticky; top:90px; height:fit-content; background:var(--white); border:1px solid var(--border); border-radius:16px; padding:1.5rem; }
+  .filters-panel h3 { font-weight:700; font-size:1rem; margin-bottom:1.2rem; }
+  .filter-group { margin-bottom:1.5rem; }
+  .filter-group label { font-size:0.83rem; font-weight:600; display:block; margin-bottom:0.5rem; }
+  .filter-group input, .filter-group select { width:100%; padding:0.65rem 0.9rem; border:1.5px solid var(--border); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:0.88rem; outline:none; }
+  .filter-group input:focus, .filter-group select:focus { border-color:var(--orange); }
+  .price-row { display:flex; gap:0.5rem; align-items:center; }
+  .price-row input { text-align:center; }
+  .price-row span { color:var(--gray); font-size:0.85rem; }
+  .results-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
+  .results-header h2 { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; }
+  .results-count { color:var(--gray); font-size:0.88rem; }
+  .listings-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.5rem; }
+  .listing-card { background:var(--white); border:1px solid var(--border); border-radius:16px; overflow:hidden; cursor:pointer; transition:all 0.2s; }
+  .listing-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+  .listing-img { width:100%; height:190px; object-fit:cover; background:var(--light-gray); display:flex; align-items:center; justify-content:center; font-size:3rem; }
+  .listing-img img { width:100%; height:100%; object-fit:cover; }
+  .listing-body { padding:1.2rem; }
+  .listing-meta { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.4rem; }
+  .listing-title { font-weight:700; font-size:0.97rem; margin-bottom:0.25rem; }
+  .listing-city { font-size:0.82rem; color:var(--gray); margin-bottom:0.8rem; }
+  .listing-footer { display:flex; align-items:center; justify-content:space-between; }
+  .listing-price strong { color:var(--orange); font-size:1rem; }
+  .listing-price span { color:var(--gray); font-size:0.78rem; }
+  .listing-rating { font-size:0.82rem; color:var(--gray); }
+  .host-chip { display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:var(--gray); margin-bottom:0.6rem; }
+  .host-avatar-sm { width:22px; height:22px; border-radius:50%; object-fit:cover; background:var(--light-gray); }
+  @media(max-width:800px) { .explore-layout{grid-template-columns:1fr;} .filters-panel{position:static;} }
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<!-- NAV -->
+<nav class="topnav">
+  <a href="../index.html" class="nav-logo">Stay<span>zee</span></a>
+  <div class="nav-right">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="host.html" class="nav-link">Become a Host</a>
+    <a href="login.html" class="nav-btn filled nav-btn" id="nav-auth">Log In</a>
+  </div>
+</nav>
+
+<!-- SEARCH HERO -->
+<div class="search-hero">
+  <h1>Find Your Perfect Stay 🌍</h1>
+  <p>Verified hosts. Authentic experiences. Affordable prices.</p>
+  <div class="search-bar">
+    <input type="text" id="search-city" placeholder="Search by city...">
+    <select id="search-gender">
+      <option value="">All Hosts</option>
+      <option value="female_only">Female Only</option>
+      <option value="male_only">Male Only</option>
+    </select>
+    <button onclick="applyFilters()">Search</button>
+  </div>
+</div>
+
+<div class="explore-layout">
+  <!-- FILTERS -->
+  <aside class="filters-panel">
+    <h3>🔧 Filters</h3>
+    <div class="filter-group">
+      <label>Price Range (₹/night)</label>
+      <div class="price-row">
+        <input type="number" id="f-min" placeholder="Min" min="0">
+        <span>—</span>
+        <input type="number" id="f-max" placeholder="Max" min="0">
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Room Type</label>
+      <select id="f-roomtype">
+        <option value="">Any</option>
+        <option value="private_room">Private Room</option>
+        <option value="shared_room">Shared Room</option>
+        <option value="entire_place">Entire Place</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Sort By</label>
+      <select id="f-sort">
+        <option value="newest">Newest</option>
+        <option value="price_asc">Price: Low to High</option>
+        <option value="price_desc">Price: High to Low</option>
+        <option value="rating">Top Rated</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="applyFilters()">Apply Filters</button>
+    <button class="btn btn-outline btn-full" style="margin-top:0.6rem" onclick="clearFilters()">Clear All</button>
+  </aside>
+
+  <!-- RESULTS -->
+  <main>
+    <div class="results-header">
+      <h2>Available Stays</h2>
+      <span class="results-count" id="results-count">Loading...</span>
+    </div>
+    <div id="listings-container"><div class="spinner"></div></div>
+  </main>
+</div>
+
+<script src="../js/supabase.js"></script>
+<script>
+  function showToast(msg,type='info'){const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;document.getElementById('toast-container').appendChild(t);setTimeout(()=>t.remove(),3500);}
+
+  async function loadListings(filters={}) {
+    const container = document.getElementById('listings-container');
+    container.innerHTML = '<div class="spinner"></div>';
+
+    let query = sb.from('listings')
+      .select('*, profiles(full_name, avatar_url, rating)')
+      .eq('is_active', true);
+
+    if (filters.city)       query = query.ilike('city', `%${filters.city}%`);
+    if (filters.minPrice)   query = query.gte('price_per_night', filters.minPrice);
+    if (filters.maxPrice)   query = query.lte('price_per_night', filters.maxPrice);
+    if (filters.genderFilter) query = query.eq('gender_filter', filters.genderFilter);
+    if (filters.roomType)   query = query.eq('room_type', filters.roomType);
+
+    if (filters.sort === 'price_asc')  query = query.order('price_per_night', { ascending: true });
+    else if (filters.sort === 'price_desc') query = query.order('price_per_night', { ascending: false });
+    else if (filters.sort === 'rating') query = query.order('rating', { ascending: false });
+    else query = query.order('created_at', { ascending: false });
+
+    const { data, error } = await query;
+    if (error) { container.innerHTML=`<p style="color:var(--danger)">${error.message}</p>`; return; }
+
+    document.getElementById('results-count').textContent = `${data?.length||0} stays found`;
+
+    if (!data||data.length===0) {
+      container.innerHTML = `<div style="text-align:center;padding:4rem;color:var(--gray)">
+        <div style="font-size:4rem;margin-bottom:1rem">🔍</div>
+        <h3>No stays found</h3><p>Try a different city or adjust filters.</p></div>`;
+      return;
+    }
+
+    container.innerHTML = `<div class="listings-grid">${data.map(l=>`
+      <div class="listing-card" onclick="window.location.href='listing.html?id=${l.id}'">
+        <div class="listing-img">
+          ${l.images&&l.images.length>0
+            ? `<img src="${l.images[0]}" alt="${l.title}">`
+            : '🏡'}
+        </div>
+        <div class="listing-body">
+          <div class="listing-meta">
+            <span class="badge badge-info" style="font-size:0.72rem">${(l.room_type||'').replace('_',' ')}</span>
+            ${l.gender_filter&&l.gender_filter!=='any'?`<span class="badge badge-success" style="font-size:0.72rem">${l.gender_filter.replace('_',' ')}</span>`:''}
+          </div>
+          <div class="listing-title">${l.title}</div>
+          <div class="listing-city">📍 ${l.city}</div>
+          <div class="host-chip">
+            <img src="${l.profiles?.avatar_url||`https://ui-avatars.com/api/?name=${encodeURIComponent(l.profiles?.full_name||'H')}&background=1a2744&color=fff`}" class="host-avatar-sm">
+            Hosted by ${l.profiles?.full_name||'Unknown'}
+          </div>
+          <div class="listing-footer">
+            <div class="listing-price"><strong>₹${parseFloat(l.price_per_night).toLocaleString('en-IN')}</strong><span>/night</span></div>
+            <div class="listing-rating">⭐ ${l.rating||'New'} ${l.total_reviews>0?`(${l.total_reviews})`:''}
+            </div>
+          </div>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  function applyFilters() {
+    loadListings({
+      city: document.getElementById('search-city').value,
+      genderFilter: document.getElementById('search-gender').value,
+      minPrice: document.getElementById('f-min').value,
+      maxPrice: document.getElementById('f-max').value,
+      roomType: document.getElementById('f-roomtype').value,
+      sort: document.getElementById('f-sort').value,
+    });
+  }
+
+  function clearFilters() {
+    ['search-city','search-gender','f-min','f-max'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('f-roomtype').value='';
+    document.getElementById('f-sort').value='newest';
+    loadListings();
+  }
+
+  // Check auth for nav
+  (async () => {
+    const session = await getSession();
+    if (session) {
+      document.getElementById('nav-auth').textContent='Dashboard';
+      document.getElementById('nav-auth').href='dashboard.html';
+    }
+  })();
+
+  loadListings();
+</script>
+</body>
+</html>

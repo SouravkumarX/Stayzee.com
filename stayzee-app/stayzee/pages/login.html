@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — Stayzee</title>
+<link rel="stylesheet" href="../css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { background:var(--navy); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem; }
+  .auth-wrap { display:grid; grid-template-columns:1fr 1fr; max-width:900px; width:100%; border-radius:24px; overflow:hidden; box-shadow:var(--shadow-lg); }
+  .auth-left {
+    background: linear-gradient(160deg, #1a2744 0%, #0f1826 100%);
+    padding:3.5rem; display:flex; flex-direction:column; justify-content:center;
+    position:relative; overflow:hidden;
+  }
+  .auth-left::before {
+    content:''; position:absolute; inset:0;
+    background-image:radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size:28px 28px;
+  }
+  .auth-left .glow { position:absolute; width:300px; height:300px; background:radial-gradient(circle, rgba(232,130,12,0.2) 0%, transparent 70%); top:-50px; right:-50px; }
+  .auth-brand { font-family:'Playfair Display',serif; font-size:2rem; font-weight:900; color:var(--white); margin-bottom:0.3rem; position:relative; z-index:1; }
+  .auth-brand span { color:var(--orange); }
+  .auth-tagline { color:var(--orange-light); font-size:0.85rem; font-weight:500; margin-bottom:2rem; position:relative; z-index:1; }
+  .auth-feature { display:flex; align-items:center; gap:0.9rem; margin-bottom:1.2rem; position:relative; z-index:1; }
+  .auth-feature-icon { width:40px; height:40px; background:rgba(232,130,12,0.15); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+  .auth-feature-text h4 { color:var(--white); font-size:0.9rem; font-weight:600; }
+  .auth-feature-text p  { color:rgba(255,255,255,0.5); font-size:0.8rem; }
+  .auth-right { background:var(--white); padding:3rem; }
+  .auth-tabs { display:flex; gap:0; margin-bottom:2rem; border:1.5px solid var(--border); border-radius:10px; overflow:hidden; }
+  .auth-tab { flex:1; padding:0.7rem; text-align:center; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all 0.2s; background:transparent; border:none; font-family:'DM Sans',sans-serif; color:var(--gray); }
+  .auth-tab.active { background:var(--navy); color:var(--white); }
+  .auth-panel { display:none; }
+  .auth-panel.active { display:block; }
+  .auth-title { font-family:'Playfair Display',serif; font-size:1.6rem; font-weight:700; margin-bottom:0.4rem; }
+  .auth-sub { color:var(--gray); font-size:0.88rem; margin-bottom:1.8rem; }
+  .social-btn { display:flex; align-items:center; justify-content:center; gap:0.8rem; width:100%; padding:0.75rem; border:1.5px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:0.9rem; font-weight:500; cursor:pointer; background:var(--white); color:var(--navy); transition:all 0.2s; margin-bottom:1rem; }
+  .social-btn:hover { border-color:var(--orange); background:var(--cream); }
+  .forgot-link { color:var(--orange); font-size:0.83rem; text-decoration:none; float:right; margin-top:-0.8rem; }
+  .forgot-link:hover { text-decoration:underline; }
+  .role-select { display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:1.2rem; }
+  .role-card { border:1.5px solid var(--border); border-radius:10px; padding:1rem; text-align:center; cursor:pointer; transition:all 0.2s; }
+  .role-card.selected { border-color:var(--orange); background:#fff7ed; }
+  .role-card .role-icon { font-size:1.5rem; margin-bottom:0.4rem; }
+  .role-card h4 { font-size:0.88rem; font-weight:600; }
+  .role-card p  { font-size:0.75rem; color:var(--gray); }
+  @media(max-width:700px) { .auth-wrap{grid-template-columns:1fr;} .auth-left{display:none;} }
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div class="auth-wrap">
+  <!-- LEFT PANEL -->
+  <div class="auth-left">
+    <div class="glow"></div>
+    <div class="auth-brand">Stay<span>zee</span></div>
+    <div class="auth-tagline">Unlock the World, Safe & Shared.</div>
+    <div class="auth-feature">
+      <div class="auth-feature-icon">🛡️</div>
+      <div class="auth-feature-text">
+        <h4>100% Verified Users</h4>
+        <p>Aadhaar/Passport + AI Face Match</p>
+      </div>
+    </div>
+    <div class="auth-feature">
+      <div class="auth-feature-icon">🤝</div>
+      <div class="auth-feature-text">
+        <h4>Community Trust Network</h4>
+        <p>Stay with people who share your values</p>
+      </div>
+    </div>
+    <div class="auth-feature">
+      <div class="auth-feature-icon">💰</div>
+      <div class="auth-feature-text">
+        <h4>3× Cheaper than Hotels</h4>
+        <p>Travel more, spend less</p>
+      </div>
+    </div>
+    <div class="auth-feature">
+      <div class="auth-feature-icon">📍</div>
+      <div class="auth-feature-text">
+        <h4>SOS Button Included</h4>
+        <p>Live location sharing anytime</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="auth-right">
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Log In</button>
+      <button class="auth-tab" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="panel-login" class="auth-panel active">
+      <h2 class="auth-title">Welcome back 👋</h2>
+      <p class="auth-sub">Log in to continue your journey</p>
+      <button class="social-btn" onclick="signInWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>
+        Continue with Google
+      </button>
+      <div class="or-divider">or</div>
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="login-email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>Password <a href="#" class="forgot-link" onclick="handleForgotPassword(event)">Forgot?</a></label>
+          <input type="password" id="login-password" placeholder="Enter your password" required>
+          <div class="form-error" id="login-error"></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="login-btn">Log In →</button>
+      </form>
+    </div>
+
+    <!-- SIGNUP -->
+    <div id="panel-signup" class="auth-panel">
+      <h2 class="auth-title">Join Stayzee 🌍</h2>
+      <p class="auth-sub">Create your free account today</p>
+      <button class="social-btn" onclick="signInWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>
+        Continue with Google
+      </button>
+      <div class="or-divider">or</div>
+      <form id="signup-form" onsubmit="handleSignup(event)">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="signup-name" placeholder="Sourav Kumar" required>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="signup-email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" id="signup-phone" placeholder="+91 98765 43210">
+        </div>
+        <div class="form-group">
+          <label>I want to join as</label>
+          <div class="role-select">
+            <div class="role-card selected" id="role-guest" onclick="selectRole('guest')">
+              <div class="role-icon">🧳</div>
+              <h4>Guest</h4>
+              <p>Find stays</p>
+            </div>
+            <div class="role-card" id="role-host" onclick="selectRole('host')">
+              <div class="role-icon">🏠</div>
+              <h4>Host</h4>
+              <p>List your space</p>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="signup-password" placeholder="Minimum 8 characters" required minlength="8">
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" id="signup-confirm" placeholder="Repeat password" required>
+          <div class="form-error" id="signup-error"></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="signup-btn">Create Account →</button>
+      </form>
+      <p style="text-align:center; font-size:0.78rem; color:var(--gray); margin-top:1rem;">
+        By signing up, you agree to our <a href="#" style="color:var(--orange);">Terms</a> and <a href="#" style="color:var(--orange);">Privacy Policy</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script src="../js/supabase.js"></script>
+<script>
+  let selectedRole = 'guest';
+
+  function switchTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='signup')));
+    document.getElementById('panel-login').classList.toggle('active', tab==='login');
+    document.getElementById('panel-signup').classList.toggle('active', tab==='signup');
+  }
+
+  function selectRole(role) {
+    selectedRole = role;
+    document.getElementById('role-guest').classList.toggle('selected', role==='guest');
+    document.getElementById('role-host').classList.toggle('selected', role==='host');
+  }
+
+  function showToast(msg, type='info') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`; t.textContent = msg;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg; el.classList.add('show');
+  }
+  function clearError(id) { document.getElementById(id).classList.remove('show'); }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    clearError('login-error');
+    const btn = document.getElementById('login-btn');
+    btn.disabled = true; btn.textContent = 'Logging in...';
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { showError('login-error', error.message); btn.disabled=false; btn.textContent='Log In →'; return; }
+    showToast('Welcome back!', 'success');
+    setTimeout(() => window.location.href = '../pages/dashboard.html', 800);
+  }
+
+  async function handleSignup(e) {
+    e.preventDefault();
+    clearError('signup-error');
+    const name     = document.getElementById('signup-name').value;
+    const email    = document.getElementById('signup-email').value;
+    const phone    = document.getElementById('signup-phone').value;
+    const password = document.getElementById('signup-password').value;
+    const confirm  = document.getElementById('signup-confirm').value;
+    if (password !== confirm) { showError('signup-error', 'Passwords do not match'); return; }
+    const btn = document.getElementById('signup-btn');
+    btn.disabled = true; btn.textContent = 'Creating account...';
+    const { data, error } = await sb.auth.signUp({
+      email, password,
+      options: { data: { full_name: name, phone, is_host: selectedRole==='host' } }
+    });
+    if (error) { showError('signup-error', error.message); btn.disabled=false; btn.textContent='Create Account →'; return; }
+    // update profile with phone + role
+    if (data.user) {
+      await upsertProfile({ id: data.user.id, full_name: name, phone, is_host: selectedRole==='host' });
+    }
+    showToast('Account created! Check your email to verify.', 'success');
+    setTimeout(() => window.location.href = '../pages/dashboard.html', 1200);
+  }
+
+  async function signInWithGoogle() {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/pages/dashboard.html' }
+    });
+    if (error) showToast(error.message, 'error');
+  }
+
+  async function handleForgotPassword(e) {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    if (!email) { showToast('Enter your email first', 'error'); return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email);
+    if (error) showToast(error.message, 'error');
+    else showToast('Password reset email sent!', 'success');
+  }
+
+  // Redirect if already logged in
+  (async () => {
+    const session = await getSession();
+    if (session) window.location.href = '../pages/dashboard.html';
+  })();
+</script>
+</body>
+</html>
