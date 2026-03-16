@@ -1,8 +1,84 @@
-# 🏡 Stayzee — Full Stack Setup Guide
+<div align="center">
 
-## Tech Stack
-- **Frontend**: Pure HTML, CSS, JavaScript (no build tools needed)
-- **Backend**: Supabase (Auth + PostgreSQL + Storage)
+# 🏡 Stayzee
+
+### *Unlock the World, Safe & Shared.*
+
+**A trusted peer-to-peer community travel platform connecting budget travelers with verified local hosts across India.**
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Netlify-00C7B7?style=for-the-badge&logo=netlify)](https://thriving-clafoutis-5e349a.netlify.app)
+[![GitHub](https://img.shields.io/badge/GitHub-SouravkumarX-181717?style=for-the-badge&logo=github)](https://github.com/SouravkumarX/Stayzee.com)
+[![Supabase](https://img.shields.io/badge/Backend-Supabase-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com)
+[![HTML](https://img.shields.io/badge/Frontend-HTML%2FCSS%2FJS-E34F26?style=for-the-badge&logo=html5)](https://developer.mozilla.org/en-US/docs/Web/HTML)
+
+</div>
+
+---
+
+## 🌟 What is Stayzee?
+
+Stayzee bridges the gap between **expensive hotels** and **risky free stays** by building a community-first platform where every user is 100% verified. Travelers can find affordable, authentic stays with locals who share their interests — and hosts can earn extra income by listing their spare rooms.
+
+> *"We don't just list rooms — we connect people."*
+
+### The Problem We Solve
+| Pain Point | How Stayzee Fixes It |
+|---|---|
+| 💼 Hotels are too expensive | Stays at a fraction of hotel prices |
+| 😞 Commercial stays are impersonal | Match with locals by shared interests & values |
+| ⚠️ Cheap alternatives feel unsafe | 100% Aadhaar/Passport + AI Face Verification |
+
+---
+
+## ✨ Features
+
+### 🔐 Auth & Profiles
+- Email/password signup & login
+- Google OAuth (one-click login)
+- Password reset via email
+- Auto profile creation on signup (DB trigger)
+- Avatar upload to Supabase Storage
+- Aadhaar/Passport + Selfie upload for ID verification
+
+### 🏠 Host Features
+- Create, edit, delete listings
+- Multi-image drag & drop upload
+- Set price per night, room type, gender filter
+- 12 amenity chips (WiFi, Kitchen, AC, etc.)
+- Accept / Decline / Complete booking requests
+- Host earnings dashboard (80% of completed bookings)
+
+### 🧭 Guest Features
+- Search & filter listings by city, price, room type, gender
+- Listing detail page with photo gallery + price breakdown
+- Date picker with automatic price + 20% service fee calculation
+- Star ratings & written reviews after completed stays
+- Booking history with status tracking
+
+### 📊 Dashboard
+- Live stats: total bookings, earnings, listings, reviews
+- Pending booking requests alert banner
+- Quick access to all features
+
+### 🛡️ Safety
+- 100% user verification (Aadhaar/Passport + AI Face Match)
+- Female-only filter for listings
+- In-app SOS & 24/7 support (coming soon)
+- Row Level Security on all database tables
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | HTML5, CSS3, Vanilla JavaScript |
+| **Backend** | Supabase (PostgreSQL + Auth + Storage) |
+| **Authentication** | Supabase Auth (Email + Google OAuth) |
+| **Database** | PostgreSQL with Row Level Security |
+| **Storage** | Supabase Storage (listing images + avatars) |
+| **Hosting** | Netlify (drag & drop deploy) |
+| **Fonts** | Syne (headings) + Outfit (body) via Google Fonts |
 
 ---
 
@@ -10,130 +86,169 @@
 
 ```
 stayzee/
-├── index.html              ← Main landing page
+├── index.html                  ← Landing page (marketing site)
+├── _redirects                  ← Netlify routing config
+├── schema.sql                  ← Full PostgreSQL schema + RLS policies
 ├── css/
-│   └── styles.css          ← Shared styles
+│   └── styles.css              ← Shared design system
 ├── js/
-│   └── supabase.js         ← All Supabase helpers
-├── schema.sql              ← Run this in Supabase SQL Editor
+│   └── supabase.js             ← All Supabase helpers (auth, DB, storage)
 └── pages/
-    ├── login.html          ← Login & Signup
-    ├── dashboard.html      ← User dashboard
-    ├── explore.html        ← Search & browse listings
-    ├── listing.html        ← Listing detail + booking form
-    ├── host.html           ← Host: manage listings + image upload
-    ├── host-bookings.html  ← Host: manage booking requests
-    ├── bookings.html       ← Guest: my bookings + reviews
-    └── profile.html        ← Profile + ID verification
+    ├── login.html              ← Login, Signup, Password Reset
+    ├── dashboard.html          ← Stats, host requests, guest bookings
+    ├── explore.html            ← Search & filter listings
+    ├── listing.html            ← Listing detail + booking form
+    ├── host.html               ← Create/edit/delete listings + image upload
+    ├── host-bookings.html      ← Accept/decline requests + earnings
+    ├── bookings.html           ← Guest bookings + star reviews
+    └── profile.html            ← Edit profile + ID verification upload
 ```
 
 ---
 
-## 🚀 Setup in 5 Steps
+## 🗄️ Database Schema
 
-### Step 1: Create a Supabase Project
-1. Go to [supabase.com](https://supabase.com) → New Project
-2. Name it "Stayzee", set a strong DB password
-3. Wait for project to initialize (~2 minutes)
+| Table | Purpose |
+|---|---|
+| `profiles` | User profiles, verification status, is_host flag |
+| `listings` | Properties with images[], amenities[], pricing, gender_filter |
+| `bookings` | Status: pending / confirmed / cancelled / completed |
+| `reviews` | Star ratings + comments, unique per booking + reviewer |
+| `messages` | In-app messaging between hosts and guests |
 
-### Step 2: Run the Database Schema
-1. Go to **SQL Editor** in your Supabase dashboard
-2. Open `schema.sql` from this project
-3. Paste the entire file and click **Run**
-4. This creates: `profiles`, `listings`, `bookings`, `reviews`, `messages` tables + storage buckets
+### Storage Buckets
+| Bucket | Access | Purpose |
+|---|---|---|
+| `listing-images` | Public | Property photos |
+| `avatars` | Public | Profile photos + ID docs |
 
-### Step 3: Configure Your Keys
+### Row Level Security
+- Listings → **public read**, owner write
+- Bookings → **host + guest only**
+- Profiles → **public read**, owner write
+- Reviews → **public read**, reviewer write
+- Messages → **sender + receiver only**
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- A free [Supabase](https://supabase.com) account
+- A code editor (VS Code recommended)
+
+### Step 1 — Clone the repo
+```bash
+git clone https://github.com/SouravkumarX/Stayzee.com.git
+cd Stayzee.com
+```
+
+### Step 2 — Set up Supabase
+1. Go to [supabase.com](https://supabase.com) → **New Project**
+2. Name it `Stayzee`, set a strong DB password
+3. Wait ~2 minutes for initialization
+
+### Step 3 — Run the database schema
+1. In Supabase → **SQL Editor**
+2. Paste the entire contents of `schema.sql`
+3. Click **Run** → you should see "Success. No rows returned"
+
+### Step 4 — Add your API keys
 Open `js/supabase.js` and replace:
 ```js
 const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
 const SUPABASE_ANON_KEY = 'YOUR_ANON_PUBLIC_KEY';
 ```
-Find these in: **Settings → API → Project URL & anon public key**
+Find these at: **Supabase Dashboard → Settings → API**
 
-### Step 4: Enable Google OAuth (optional)
-1. Supabase Dashboard → **Authentication → Providers → Google**
-2. Add your Google OAuth credentials
-3. Add your site URL to the redirect list
+### Step 5 — Enable Google OAuth (optional)
+1. Supabase → **Authentication → Providers → Google** → Toggle ON
+2. Add your Google OAuth credentials from [Google Cloud Console](https://console.cloud.google.com)
+3. Add redirect URI: `https://YOUR_PROJECT_ID.supabase.co/auth/v1/callback`
+4. Add your site URL in **Authentication → URL Configuration**
 
-### Step 5: Deploy
-**Option A — Free hosting on Netlify:**
+### Step 6 — Deploy
+**Netlify (recommended — easiest):**
+> Drag and drop the project folder at [app.netlify.com/drop](https://app.netlify.com/drop)
+
+**GitHub Pages:**
+> Settings → Pages → Deploy from `main` branch → root `/`
+
+**Vercel:**
 ```bash
-# Drag and drop the stayzee/ folder at netlify.com/drop
+npx vercel
 ```
 
-**Option B — Vercel:**
-```bash
-npm install -g vercel
-cd stayzee/
-vercel
+---
+
+## 💰 Revenue Model
+
+```
+Primary:   20% commission per successful booking
+Host keeps: 80% of each booking value
+
+Host Upsells (coming soon):
+  • Home Meals    — Hosts cook dinner for guests
+  • Experiences   — Local tours & activities
+  • Vehicle Rental — Bikes/cars with verified docs
 ```
 
-**Option C — GitHub Pages:**
-Push to a GitHub repo → Settings → Pages → Deploy from main branch
+---
+
+## 📱 Features Status
+
+| Feature | Status |
+|---|---|
+| Email/password auth | ✅ Live |
+| Google OAuth | ✅ Live |
+| Password reset | ✅ Live |
+| Host listing CRUD | ✅ Live |
+| Multi-image upload | ✅ Live |
+| Search & filter | ✅ Live |
+| Booking system | ✅ Live |
+| Price breakdown (20% fee) | ✅ Live |
+| Host accept/decline | ✅ Live |
+| Guest star reviews | ✅ Live |
+| ID verification upload | ✅ Live |
+| Host earnings dashboard | ✅ Live |
+| Responsive design | ✅ Live |
+| Razorpay payments | 🔜 Coming Soon |
+| AI face verification | 🔜 Coming Soon |
+| Realtime messaging | 🔜 Coming Soon |
+| Google Maps integration | 🔜 Coming Soon |
+| Push notifications | 🔜 Coming Soon |
 
 ---
 
-## 🗄️ Database Schema Overview
+## 🗺️ Go-to-Market Strategy
 
-| Table     | Purpose |
-|-----------|---------|
-| `profiles` | User profiles, verification status, host flag |
-| `listings` | Property listings with images, amenities, pricing |
-| `bookings` | Booking requests with status (pending/confirmed/completed/cancelled) |
-| `reviews`  | Guest reviews with star ratings |
-| `messages` | In-app messaging between hosts and guests |
-
-## 🪣 Storage Buckets
-
-| Bucket | Purpose |
-|--------|---------|
-| `listing-images` | Property photos (public) |
-| `avatars` | User profile photos + ID verification docs |
+| Phase | Target | Goal |
+|---|---|---|
+| **Phase 1 — Pilot** | Chandigarh | 50 hosts, 0% commission to build supply |
+| **Phase 2 — Students** | Exam Corridor | Target students with spare beds & travel needs |
+| **Phase 3 — Scale** | 10 Tier-2 Cities | Replicate playbook across India |
 
 ---
 
-## 🔐 Row Level Security (RLS)
-All tables have RLS enabled:
-- Listings are **public** (anyone can view)
-- Bookings are **private** (only host/guest can see)
-- Profiles are **public to view**, private to edit
-- Messages are **private** (only sender/receiver)
+## 👤 About the Builder
+
+**Sourav Kumar**
+- 📧 sourav.works2718@gmail.com
+- 📱 +91 9304090553
+- 🐙 [github.com/SouravkumarX](https://github.com/SouravkumarX)
 
 ---
 
-## 💰 Revenue Model Implemented
-- Bookings calculate **20% service fee** automatically
-- Host earnings show **80% of completed booking totals**
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
 
 ---
 
-## 📱 Features Checklist
-- ✅ Email/password auth
-- ✅ Google OAuth
-- ✅ Password reset
-- ✅ Auto profile creation on signup
-- ✅ Host listing management (create, edit, delete)
-- ✅ Multi-image upload with drag & drop
-- ✅ Search & filter listings
-- ✅ Booking requests with date picker
-- ✅ Price breakdown with service fee
-- ✅ Host booking management (accept/decline)
-- ✅ Guest reviews with star ratings
-- ✅ ID verification upload
-- ✅ Avatar upload
-- ✅ Dashboard with stats & earnings
-- ✅ Responsive design (mobile friendly)
+<div align="center">
 
----
+Built with ❤️ by **Sourav Kumar** · © 2025 Stayzee
 
-## 🛠️ Next Steps (Production)
-- [ ] Add Razorpay/Stripe payment gateway
-- [ ] Implement real AI face verification (e.g. AWS Rekognition)
-- [ ] Add Supabase Realtime for live messaging
-- [ ] Email notifications (Supabase handles transactional emails)
-- [ ] Add Google Maps integration for listing locations
-- [ ] Push notifications for mobile
+*Making every trip an opportunity for connection.*
 
----
-
-Built with ❤️ by Sourav Kumar | sourav.works2718@gmail.com
+</div>
