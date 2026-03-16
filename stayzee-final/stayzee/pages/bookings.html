@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Bookings — Stayzee</title>
+<link rel="stylesheet" href="../css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { padding-top:66px; background:var(--cream); }
+  .bookings-wrap { max-width:900px; margin:0 auto; padding:2.5rem 5%; }
+  .booking-tabs { display:flex; gap:0; margin-bottom:2rem; border:1.5px solid var(--border); border-radius:10px; overflow:hidden; width:fit-content; background:var(--white); }
+  .booking-tab { padding:0.65rem 1.4rem; font-size:0.88rem; font-weight:600; cursor:pointer; border:none; background:transparent; font-family:'DM Sans',sans-serif; color:var(--gray); transition:all 0.2s; }
+  .booking-tab.active { background:var(--navy); color:var(--white); }
+  .booking-card { background:var(--white); border:1px solid var(--border); border-radius:16px; overflow:hidden; margin-bottom:1.2rem; transition:box-shadow 0.2s; }
+  .booking-card:hover { box-shadow:var(--shadow); }
+  .booking-card-inner { display:grid; grid-template-columns:140px 1fr auto; gap:0; }
+  .booking-img { width:140px; height:140px; object-fit:cover; background:var(--light-gray); display:flex; align-items:center; justify-content:center; font-size:2.5rem; }
+  .booking-img img { width:100%; height:100%; object-fit:cover; }
+  .booking-info { padding:1.2rem; flex:1; }
+  .booking-info h3 { font-weight:700; font-size:1rem; margin-bottom:0.3rem; }
+  .booking-meta { font-size:0.82rem; color:var(--gray); margin-bottom:0.8rem; }
+  .booking-dates { display:flex; gap:1.5rem; margin-bottom:0.8rem; }
+  .booking-date-item { font-size:0.82rem; }
+  .booking-date-item .label { color:var(--gray); font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+  .booking-date-item .value { font-weight:600; margin-top:0.1rem; }
+  .booking-side { padding:1.2rem; text-align:right; display:flex; flex-direction:column; align-items:flex-end; justify-content:space-between; border-left:1px solid var(--border); }
+  .booking-amount { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; color:var(--orange); }
+  .booking-amount span { font-family:'DM Sans',sans-serif; font-size:0.78rem; color:var(--gray); font-weight:400; }
+  .booking-actions { display:flex; flex-direction:column; gap:0.4rem; }
+  .review-form { padding:1.2rem; border-top:1px solid var(--border); background:var(--cream); display:none; }
+  .review-form.open { display:block; }
+  .star-input { display:flex; gap:0.3rem; margin-bottom:0.8rem; font-size:1.6rem; cursor:pointer; }
+  .star-input span { color:var(--border); transition:color 0.15s; }
+  .star-input span.active { color:#f59e0b; }
+  @media(max-width:600px) { .booking-card-inner{grid-template-columns:1fr;} .booking-img{width:100%;height:160px;} .booking-side{border-left:none;border-top:1px solid var(--border);flex-direction:row;align-items:center;} }
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<nav class="topnav">
+  <a href="../index.html" class="nav-logo">Stay<span>zee</span></a>
+  <div class="nav-right">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="explore.html" class="nav-link">Explore</a>
+    <button class="nav-btn outline" onclick="signOut()">Log Out</button>
+  </div>
+</nav>
+
+<div class="bookings-wrap">
+  <h1 class="page-title">My Bookings</h1>
+  <p class="page-sub">Track all your stay requests and upcoming trips</p>
+
+  <div class="booking-tabs">
+    <button class="booking-tab active" onclick="filterBookings('all',this)">All</button>
+    <button class="booking-tab" onclick="filterBookings('pending',this)">Pending</button>
+    <button class="booking-tab" onclick="filterBookings('confirmed',this)">Confirmed</button>
+    <button class="booking-tab" onclick="filterBookings('completed',this)">Completed</button>
+    <button class="booking-tab" onclick="filterBookings('cancelled',this)">Cancelled</button>
+  </div>
+
+  <div id="bookings-list"><div class="spinner"></div></div>
+</div>
+
+<script src="../js/supabase.js"></script>
+<script>
+  function showToast(msg,type='info'){const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;document.getElementById('toast-container').appendChild(t);setTimeout(()=>t.remove(),3500);}
+
+  let allBookings = [];
+  let selectedStars = 0;
+  let currentUser = null;
+
+  function statusBadge(s){
+    const m={pending:'badge-warning',confirmed:'badge-success',cancelled:'badge-danger',completed:'badge-info'};
+    return `<span class="badge ${m[s]||'badge-info'}">${s}</span>`;
+  }
+
+  function filterBookings(status, btn) {
+    document.querySelectorAll('.booking-tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    renderBookings(status==='all' ? allBookings : allBookings.filter(b=>b.status===status));
+  }
+
+  function toggleReviewForm(bookingId) {
+    const form = document.getElementById('review-'+bookingId);
+    form.classList.toggle('open');
+  }
+
+  function setStars(bookingId, n) {
+    selectedStars = n;
+    for (let i=1;i<=5;i++) {
+      document.getElementById(`star-${bookingId}-${i}`).classList.toggle('active', i<=n);
+    }
+  }
+
+  async function submitReview(bookingId, listingId) {
+    const comment = document.getElementById('review-comment-'+bookingId).value;
+    if (!selectedStars) { showToast('Please select a star rating','error'); return; }
+    const { error } = await createReview({ listing_id:listingId, booking_id:bookingId, reviewer_id:currentUser.id, rating:selectedStars, comment });
+    if (error) showToast(error.message,'error');
+    else { showToast('Review submitted! ⭐','success'); loadBookings(); }
+  }
+
+  async function cancelBooking(id) {
+    if (!confirm('Cancel this booking?')) return;
+    const { error } = await updateBookingStatus(id, 'cancelled');
+    if (error) showToast(error.message,'error');
+    else { showToast('Booking cancelled','info'); loadBookings(); }
+  }
+
+  function renderBookings(bookings) {
+    const container = document.getElementById('bookings-list');
+    if (!bookings||bookings.length===0) {
+      container.innerHTML=`<div style="text-align:center;padding:4rem;color:var(--gray)">
+        <div style="font-size:4rem;margin-bottom:1rem">🧳</div>
+        <h3>No bookings here</h3>
+        <p><a href="explore.html" style="color:var(--orange)">Explore stays →</a></p></div>`;
+      return;
+    }
+    container.innerHTML = bookings.map(b => {
+      const l = b.listings||{};
+      const nights = Math.max(0,(new Date(b.check_out)-new Date(b.check_in))/(1000*60*60*24));
+      return `<div class="booking-card">
+        <div class="booking-card-inner">
+          <div class="booking-img">${l.images?.[0]?`<img src="${l.images[0]}" alt="${l.title}">`:'🏡'}</div>
+          <div class="booking-info">
+            <h3>${l.title||'—'}</h3>
+            <div class="booking-meta">📍 ${l.city||'—'} · Hosted by ${l.profiles?.full_name||'—'}</div>
+            <div class="booking-dates">
+              <div class="booking-date-item"><div class="label">Check-in</div><div class="value">${b.check_in}</div></div>
+              <div class="booking-date-item"><div class="label">Check-out</div><div class="value">${b.check_out}</div></div>
+              <div class="booking-date-item"><div class="label">Duration</div><div class="value">${nights} night${nights!==1?'s':''}</div></div>
+              <div class="booking-date-item"><div class="label">Guests</div><div class="value">${b.guests}</div></div>
+            </div>
+            ${statusBadge(b.status)}
+          </div>
+          <div class="booking-side">
+            <div><div class="booking-amount">₹${parseFloat(b.total_price).toLocaleString('en-IN')}<br><span>total</span></div></div>
+            <div class="booking-actions">
+              ${b.status==='pending'?`<button class="btn btn-danger btn-sm" onclick="cancelBooking('${b.id}')">Cancel</button>`:''}
+              ${b.status==='completed'?`<button class="btn btn-outline btn-sm" onclick="toggleReviewForm('${b.id}')">Leave Review</button>`:''}
+              <a href="listing.html?id=${b.listing_id}" class="btn btn-outline btn-sm">View</a>
+            </div>
+          </div>
+        </div>
+        ${b.status==='completed'?`
+        <div class="review-form" id="review-${b.id}">
+          <h4 style="font-size:0.95rem;margin-bottom:0.8rem">Rate your stay</h4>
+          <div class="star-input">
+            ${[1,2,3,4,5].map(i=>`<span id="star-${b.id}-${i}" onclick="setStars('${b.id}',${i})">★</span>`).join('')}
+          </div>
+          <div class="form-group">
+            <textarea id="review-comment-${b.id}" placeholder="Share your experience..."></textarea>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="submitReview('${b.id}','${b.listing_id}')">Submit Review</button>
+        </div>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  async function loadBookings() {
+    currentUser = await requireAuth('../pages/login.html');
+    if (!currentUser) return;
+    const { data, error } = await getMyBookings(currentUser.id);
+    if (error) { showToast(error.message,'error'); return; }
+    allBookings = data||[];
+    renderBookings(allBookings);
+  }
+
+  loadBookings();
+</script>
+</body>
+</html>
