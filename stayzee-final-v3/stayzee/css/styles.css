@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --navy: #1a2744;
+  --navy-light: #243660;
+  --orange: #e8820c;
+  --orange-light: #f5a93a;
+  --cream: #faf8f4;
+  --white: #ffffff;
+  --gray: #6b7280;
+  --light-gray: #f3f4f6;
+  --border: #e5e7eb;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --shadow: 0 4px 24px rgba(26,39,68,0.10);
+  --shadow-lg: 0 12px 40px rgba(26,39,68,0.16);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--navy); overflow-x: hidden; }
+
+/* ── NAV ── */
+.topnav {
+  position: fixed; top: 0; width: 100%; z-index: 200;
+  background: rgba(250,248,244,0.95); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  height: 66px; display: flex; align-items: center;
+  padding: 0 5%; justify-content: space-between;
+}
+.nav-logo { font-family:'Playfair Display',serif; font-size:1.55rem; font-weight:900; color:var(--navy); text-decoration:none; }
+.nav-logo span { color:var(--orange); }
+.nav-right { display:flex; align-items:center; gap:1rem; }
+.nav-link { text-decoration:none; color:var(--navy); font-size:0.88rem; font-weight:500; transition:color 0.2s; }
+.nav-link:hover { color:var(--orange); }
+.nav-btn { padding:0.5rem 1.3rem; border-radius:50px; font-size:0.88rem; font-weight:600; cursor:pointer; text-decoration:none; transition:all 0.2s; border:none; font-family:'DM Sans',sans-serif; }
+.nav-btn.outline { background:transparent; border:1.5px solid var(--navy); color:var(--navy); }
+.nav-btn.outline:hover { background:var(--navy); color:var(--white); }
+.nav-btn.filled { background:var(--orange); color:var(--white); }
+.nav-btn.filled:hover { background:var(--orange-light); transform:translateY(-1px); }
+.nav-avatar { width:36px; height:36px; border-radius:50%; object-fit:cover; cursor:pointer; border:2px solid var(--orange); }
+
+/* ── FORMS ── */
+.form-group { margin-bottom: 1.2rem; }
+.form-group label { display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.45rem; color:var(--navy); }
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width:100%; padding:0.8rem 1rem;
+  border:1.5px solid var(--border); border-radius:10px;
+  font-family:'DM Sans',sans-serif; font-size:0.92rem;
+  color:var(--navy); background:var(--white);
+  outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color:var(--orange); box-shadow:0 0 0 3px rgba(232,130,12,0.12); }
+.form-group textarea { resize:vertical; min-height:100px; }
+.form-error { color:var(--danger); font-size:0.8rem; margin-top:0.3rem; display:none; }
+.form-error.show { display:block; }
+
+/* ── BUTTONS ── */
+.btn { display:inline-flex; align-items:center; gap:0.5rem; padding:0.8rem 1.8rem; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:0.92rem; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:all 0.2s; }
+.btn-primary { background:var(--orange); color:var(--white); box-shadow:0 4px 16px rgba(232,130,12,0.3); }
+.btn-primary:hover { background:var(--orange-light); transform:translateY(-2px); }
+.btn-secondary { background:var(--navy); color:var(--white); }
+.btn-secondary:hover { background:var(--navy-light); transform:translateY(-2px); }
+.btn-outline { background:transparent; border:1.5px solid var(--border); color:var(--navy); }
+.btn-outline:hover { border-color:var(--orange); color:var(--orange); }
+.btn-danger { background:var(--danger); color:var(--white); }
+.btn-sm { padding:0.5rem 1.1rem; font-size:0.82rem; }
+.btn-full { width:100%; justify-content:center; }
+.btn:disabled { opacity:0.6; cursor:not-allowed; transform:none !important; }
+
+/* ── CARDS ── */
+.card { background:var(--white); border:1px solid var(--border); border-radius:16px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s; }
+.card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+
+/* ── BADGE ── */
+.badge { display:inline-block; padding:0.25rem 0.75rem; border-radius:50px; font-size:0.75rem; font-weight:600; }
+.badge-success { background:#d1fae5; color:#065f46; }
+.badge-warning { background:#fef3c7; color:#92400e; }
+.badge-danger  { background:#fee2e2; color:#991b1b; }
+.badge-info    { background:#dbeafe; color:#1e40af; }
+
+/* ── TOAST ── */
+#toast-container { position:fixed; bottom:2rem; right:2rem; z-index:9999; display:flex; flex-direction:column; gap:0.75rem; }
+.toast { padding:0.9rem 1.5rem; border-radius:12px; font-size:0.88rem; font-weight:500; color:var(--white); box-shadow:var(--shadow-lg); animation:slideIn 0.3s ease; max-width:320px; }
+.toast.success { background:#10b981; }
+.toast.error   { background:#ef4444; }
+.toast.info    { background:var(--navy); }
+@keyframes slideIn { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+
+/* ── PAGE WRAPPER ── */
+.page-wrap { max-width:1200px; margin:0 auto; padding:5rem 5% 4rem; }
+.page-title { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3vw,2.5rem); font-weight:700; margin-bottom:0.5rem; }
+.page-sub   { color:var(--gray); font-size:0.95rem; margin-bottom:2.5rem; }
+
+/* ── LOADING ── */
+.spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--orange); border-radius:50%; animation:spin 0.8s linear infinite; margin:4rem auto; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ── DIVIDER ── */
+.divider { height:1px; background:var(--border); margin:1.5rem 0; }
+.or-divider { display:flex; align-items:center; gap:1rem; margin:1.5rem 0; color:var(--gray); font-size:0.85rem; }
+.or-divider::before,.or-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ── STARS ── */
+.stars { color:#f59e0b; letter-spacing:2px; }
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px) {
+  .page-wrap { padding:4.5rem 4% 3rem; }
+}

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Stayzee</title>
+<link rel="stylesheet" href="../css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { padding-top:66px; }
+  .dash-layout { display:grid; grid-template-columns:240px 1fr; min-height:calc(100vh - 66px); }
+  .sidebar { background:var(--navy); padding:2rem 1rem; position:sticky; top:66px; height:calc(100vh - 66px); overflow-y:auto; }
+  .sidebar-user { text-align:center; padding-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:1.5rem; }
+  .sidebar-avatar { width:72px; height:72px; border-radius:50%; object-fit:cover; border:3px solid var(--orange); margin-bottom:0.8rem; }
+  .sidebar-name { color:var(--white); font-weight:600; font-size:0.95rem; }
+  .sidebar-role { color:var(--orange-light); font-size:0.78rem; margin-top:0.2rem; }
+  .sidebar-badge { display:inline-block; background:rgba(232,130,12,0.2); color:var(--orange-light); font-size:0.7rem; padding:0.2rem 0.6rem; border-radius:20px; margin-top:0.4rem; }
+  .sidebar-nav { list-style:none; }
+  .sidebar-nav li { margin-bottom:0.3rem; }
+  .sidebar-nav a { display:flex; align-items:center; gap:0.8rem; padding:0.7rem 1rem; border-radius:10px; color:rgba(255,255,255,0.65); text-decoration:none; font-size:0.88rem; font-weight:500; transition:all 0.2s; }
+  .sidebar-nav a:hover, .sidebar-nav a.active { background:rgba(255,255,255,0.08); color:var(--white); }
+  .sidebar-nav a.active { background:rgba(232,130,12,0.18); color:var(--orange-light); }
+  .sidebar-nav .icon { font-size:1.1rem; width:20px; text-align:center; }
+  .sidebar-section { color:rgba(255,255,255,0.3); font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; padding:0.8rem 1rem 0.4rem; }
+  .main-content { padding:2.5rem; background:var(--cream); }
+  .welcome-banner { background:linear-gradient(135deg, var(--navy) 0%, #243660 100%); border-radius:16px; padding:2rem 2.5rem; margin-bottom:2rem; display:flex; align-items:center; justify-content:space-between; position:relative; overflow:hidden; }
+  .welcome-banner::before { content:''; position:absolute; inset:0; background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px); background-size:24px 24px; }
+  .welcome-text h2 { font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--white); position:relative; z-index:1; }
+  .welcome-text p  { color:rgba(255,255,255,0.6); font-size:0.88rem; margin-top:0.3rem; position:relative; z-index:1; }
+  .welcome-actions { display:flex; gap:0.8rem; position:relative; z-index:1; }
+  .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1.2rem; margin-bottom:2rem; }
+  .stat-card { background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.5rem; }
+  .stat-card .stat-icon { font-size:1.6rem; margin-bottom:0.8rem; }
+  .stat-card .stat-val { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:700; }
+  .stat-card .stat-lbl { font-size:0.8rem; color:var(--gray); margin-top:0.2rem; }
+  .stat-card .stat-chg { font-size:0.78rem; color:var(--success); margin-top:0.4rem; }
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem; }
+  .section-header h3 { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:700; }
+  .bookings-table { width:100%; border-collapse:collapse; background:var(--white); border-radius:14px; overflow:hidden; border:1px solid var(--border); }
+  .bookings-table th { background:var(--navy); color:var(--white); padding:0.9rem 1.2rem; text-align:left; font-size:0.82rem; font-weight:600; letter-spacing:0.5px; }
+  .bookings-table td { padding:0.9rem 1.2rem; font-size:0.88rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .bookings-table tr:last-child td { border-bottom:none; }
+  .bookings-table tr:hover td { background:#fafafa; }
+  .listing-mini { display:flex; align-items:center; gap:0.8rem; }
+  .listing-thumb { width:48px; height:48px; border-radius:8px; object-fit:cover; background:var(--light-gray); }
+  .listing-mini h4 { font-size:0.88rem; font-weight:600; }
+  .listing-mini p { font-size:0.78rem; color:var(--gray); }
+  .action-btns { display:flex; gap:0.5rem; }
+  @media(max-width:900px) { .dash-layout{grid-template-columns:1fr;} .sidebar{display:none;} .stats-row{grid-template-columns:1fr 1fr;} }
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<!-- NAV -->
+<nav class="topnav">
+  <a href="../index.html" class="nav-logo">Stay<span>zee</span></a>
+  <div class="nav-right">
+    <a href="explore.html" class="nav-link">Explore</a>
+    <a href="host.html" class="nav-link">Become a Host</a>
+    <img id="nav-avatar" src="https://ui-avatars.com/api/?name=User&background=1a2744&color=fff" class="nav-avatar" onclick="window.location.href='profile.html'">
+    <button class="nav-btn outline nav-btn" onclick="signOut()">Log Out</button>
+  </div>
+</nav>
+
+<div class="dash-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <img id="sb-avatar" src="https://ui-avatars.com/api/?name=User&background=1a2744&color=fff" class="sidebar-avatar">
+      <div class="sidebar-name" id="sb-name">Loading...</div>
+      <div class="sidebar-role" id="sb-role">Guest</div>
+      <div class="sidebar-badge" id="sb-verified">⏳ Unverified</div>
+    </div>
+    <ul class="sidebar-nav">
+      <div class="sidebar-section">Main</div>
+      <li><a href="dashboard.html" class="active"><span class="icon">🏠</span> Dashboard</a></li>
+      <li><a href="explore.html"><span class="icon">🔍</span> Explore Stays</a></li>
+      <li><a href="bookings.html"><span class="icon">📋</span> My Bookings</a></li>
+      <div class="sidebar-section" id="host-section" style="display:none">Host</div>
+      <li id="host-listings-link" style="display:none"><a href="host.html"><span class="icon">🏡</span> My Listings</a></li>
+      <li id="host-bookings-link" style="display:none"><a href="host-bookings.html"><span class="icon">📅</span> Host Bookings</a></li>
+      <div class="sidebar-section">Account</div>
+      <li><a href="profile.html"><span class="icon">👤</span> Profile & Verify</a></li>
+      <li><a href="#" onclick="signOut()"><span class="icon">🚪</span> Log Out</a></li>
+    </ul>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <div class="welcome-banner">
+      <div class="welcome-text">
+        <h2>Welcome back, <span id="welcome-name">Traveller</span> 👋</h2>
+        <p id="welcome-sub">Your next adventure is waiting.</p>
+      </div>
+      <div class="welcome-actions">
+        <a href="explore.html" class="btn btn-primary btn-sm">Find a Stay</a>
+        <a href="host.html" class="btn btn-outline btn-sm" style="color:var(--white);border-color:rgba(255,255,255,0.4);" id="host-cta">List Your Space</a>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-val" id="stat-bookings">—</div><div class="stat-lbl">Total Bookings</div></div>
+      <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-val" id="stat-rating">—</div><div class="stat-lbl">Your Rating</div></div>
+      <div class="stat-card" id="stat-earnings-card" style="display:none"><div class="stat-icon">💰</div><div class="stat-val" id="stat-earnings">—</div><div class="stat-lbl">Total Earnings</div></div>
+      <div class="stat-card" id="stat-listings-card" style="display:none"><div class="stat-icon">🏡</div><div class="stat-val" id="stat-listings">—</div><div class="stat-lbl">Active Listings</div></div>
+      <div class="stat-card"><div class="stat-icon">🌍</div><div class="stat-val" id="stat-cities">—</div><div class="stat-lbl">Cities Visited</div></div>
+      <div class="stat-card"><div class="stat-icon">🛡️</div><div class="stat-val" id="stat-verified">No</div><div class="stat-lbl">ID Verified</div><div class="stat-chg" id="stat-verify-link"></div></div>
+    </div>
+
+    <!-- BOOKINGS (host requests + guest bookings rendered dynamically) -->
+    <div id="bookings-container">
+      <div class="spinner"></div>
+    </div>
+  </main>
+</div>
+
+<script src="../js/supabase.js"></script>
+<script>
+  function showToast(msg, type='info') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`; t.textContent = msg;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  function statusBadge(s) {
+    const map = { pending:'badge-warning', confirmed:'badge-success', cancelled:'badge-danger', completed:'badge-info' };
+    return `<span class="badge ${map[s]||'badge-info'}">${s}</span>`;
+  }
+
+  async function loadDashboard() {
+    const user = await requireAuth('../pages/login.html');
+    if (!user) return;
+
+    const { data: profile } = await getProfile(user.id);
+    if (!profile) return;
+
+    // Check if user has any listings — if so, they ARE a host regardless of flag
+    const { data: myListings } = await sb.from('listings').select('id').eq('host_id', user.id);
+    const isHost = profile.is_host || (myListings && myListings.length > 0);
+
+    // If they have listings but flag is false, fix it in DB
+    if (isHost && !profile.is_host) {
+      await upsertProfile({ id: user.id, is_host: true });
+    }
+
+    // Set UI
+    const name = profile.full_name || 'Traveller';
+    document.getElementById('welcome-name').textContent = name.split(' ')[0];
+    document.getElementById('sb-name').textContent = name;
+    document.getElementById('sb-role').textContent = isHost ? 'Host & Guest' : 'Guest';
+    document.getElementById('stat-verified').textContent = profile.id_verified ? '✅ Yes' : 'No';
+    document.getElementById('sb-verified').textContent = profile.id_verified ? '✅ Verified' : '⏳ Unverified';
+    if (!profile.id_verified) {
+      document.getElementById('stat-verify-link').innerHTML = '<a href="profile.html" style="color:var(--orange)">Verify now →</a>';
+    }
+    if (profile.avatar_url) {
+      document.getElementById('sb-avatar').src = profile.avatar_url;
+      document.getElementById('nav-avatar').src = profile.avatar_url;
+    }
+    document.getElementById('stat-rating').textContent = profile.rating || '5.0';
+
+    // Show host sections if user is a host
+    if (isHost) {
+      document.getElementById('host-section').style.display = '';
+      document.getElementById('host-listings-link').style.display = '';
+      document.getElementById('host-bookings-link').style.display = '';
+      document.getElementById('stat-earnings-card').style.display = '';
+      document.getElementById('stat-listings-card').style.display = '';
+      document.getElementById('welcome-sub').textContent = 'Manage your listings and booking requests below.';
+
+      // Load host listings count
+      document.getElementById('stat-listings').textContent = myListings?.length || 0;
+
+      // Calculate earnings from completed bookings
+      const { data: hb } = await sb.from('bookings').select('total_price').eq('host_id', user.id).eq('status', 'completed');
+      const earnings = hb?.reduce((s,b) => s + parseFloat(b.total_price) * 0.8, 0) || 0;
+      document.getElementById('stat-earnings').textContent = '₹' + earnings.toLocaleString('en-IN');
+
+      // Show pending host booking requests in dashboard
+      const { data: pendingRequests } = await sb
+        .from('bookings')
+        .select('*, listings(title,city), profiles!guest_id(full_name)')
+        .eq('host_id', user.id)
+        .eq('status', 'pending');
+
+      if (pendingRequests && pendingRequests.length > 0) {
+        const alertDiv = document.createElement('div');
+        alertDiv.style.cssText = 'background:#fff7ed;border:1.5px solid var(--orange);border-radius:14px;padding:1.2rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;';
+        alertDiv.innerHTML = `
+          <div>
+            <strong style="color:var(--orange)">🔔 ${pendingRequests.length} pending booking request${pendingRequests.length>1?'s':''}!</strong>
+            <p style="font-size:0.85rem;color:var(--gray);margin-top:0.2rem">Guests are waiting for your response.</p>
+          </div>
+          <a href="host-bookings.html" class="btn btn-primary btn-sm">Review Requests →</a>`;
+        document.getElementById('bookings-container').before(alertDiv);
+      }
+
+      // Show host bookings section too
+      const { data: hostBookings } = await sb
+        .from('bookings')
+        .select('*, listings(title,city), profiles!guest_id(full_name)')
+        .eq('host_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (hostBookings && hostBookings.length > 0) {
+        const hostSection = document.createElement('div');
+        hostSection.style.cssText = 'margin-bottom:2rem;';
+        hostSection.innerHTML = `
+          <div class="section-header" style="margin-bottom:1rem">
+            <h3 style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;">🏠 Host Booking Requests</h3>
+            <a href="host-bookings.html" class="btn btn-outline btn-sm">Manage All</a>
+          </div>
+          <table class="bookings-table">
+            <thead><tr><th>Guest</th><th>Property</th><th>Check-in</th><th>Check-out</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>${hostBookings.map(b=>`
+              <tr>
+                <td><strong>${b.profiles?.full_name||'Guest'}</strong></td>
+                <td>${b.listings?.title||'—'}<br><small style="color:var(--gray)">${b.listings?.city||''}</small></td>
+                <td>${b.check_in}</td>
+                <td>${b.check_out}</td>
+                <td><strong>₹${(parseFloat(b.total_price)*0.8).toLocaleString('en-IN')}</strong></td>
+                <td>${statusBadge(b.status)}</td>
+                <td><a href="host-bookings.html" class="btn btn-outline btn-sm">View</a></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>`;
+        document.getElementById('bookings-container').before(hostSection);
+      }
+    }
+
+    // Load guest bookings
+    const { data: bookings } = await getMyBookings(user.id);
+    document.getElementById('stat-bookings').textContent = bookings?.length || 0;
+
+    // Count unique cities
+    const cities = new Set((bookings||[]).map(b => b.listings?.city).filter(Boolean));
+    document.getElementById('stat-cities').textContent = cities.size;
+
+    // Render guest bookings table
+    const container = document.getElementById('bookings-container');
+    if (!bookings || bookings.length === 0) {
+      container.innerHTML = `<div style="text-align:center;padding:3rem;color:var(--gray)">
+        <div style="font-size:3rem;margin-bottom:1rem">🧳</div>
+        <p>No guest bookings yet. <a href="explore.html" style="color:var(--orange)">Explore stays →</a></p>
+      </div>`;
+      return;
+    }
+
+    // Show section header for guest bookings
+    const guestHeader = document.createElement('div');
+    guestHeader.className = 'section-header';
+    guestHeader.style.marginBottom = '1rem';
+    guestHeader.innerHTML = `<h3 style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;">🧳 My Travel Bookings</h3><a href="bookings.html" class="btn btn-outline btn-sm">View All</a>`;
+    container.before(guestHeader);
+
+    container.innerHTML = `<table class="bookings-table">
+      <thead><tr><th>Property</th><th>Host</th><th>Check-in</th><th>Check-out</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody>${(bookings.slice(0,5)||[]).map(b => `
+        <tr>
+          <td><div class="listing-mini">
+            <div style="width:48px;height:48px;border-radius:8px;background:var(--light-gray);display:flex;align-items:center;justify-content:center;font-size:1.4rem">🏡</div>
+            <div><h4>${b.listings?.title||'—'}</h4><p>${b.listings?.city||''}</p></div>
+          </div></td>
+          <td>${b.listings?.profiles?.full_name||'—'}</td>
+          <td>${b.check_in}</td><td>${b.check_out}</td>
+          <td><strong>₹${parseFloat(b.total_price).toLocaleString('en-IN')}</strong></td>
+          <td>${statusBadge(b.status)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  loadDashboard();
+</script>
+</body>
+</html>

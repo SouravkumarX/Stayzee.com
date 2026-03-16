@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stayzee — Unlock the World, Safe & Shared</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0d1b2a;--navy2:#1b2d42;--orange:#f07d23;--orange2:#ffaa5c;--cream:#fdf8f3;--white:#ffffff;--gray:#64748b;--border:#e8e8e8;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--navy);overflow-x:hidden;}
+
+/* NAV */
+nav{position:fixed;top:0;width:100%;z-index:500;padding:0 6%;height:72px;display:flex;align-items:center;justify-content:space-between;background:rgba(13,27,42,0.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.07);}
+.nav-logo{font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:#fff;letter-spacing:-1px;text-decoration:none;}
+.nav-logo span{color:var(--orange);}
+.nav-links{display:flex;gap:2.2rem;list-style:none;}
+.nav-links a{color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.88rem;font-weight:500;transition:color 0.2s;}
+.nav-links a:hover{color:#fff;}
+.nav-right{display:flex;align-items:center;gap:0.8rem;}
+.btn-login{color:rgba(255,255,255,0.8);text-decoration:none;font-size:0.88rem;font-weight:500;padding:0.5rem 1.2rem;border-radius:50px;border:1px solid rgba(255,255,255,0.2);transition:all 0.2s;}
+.btn-login:hover{border-color:rgba(255,255,255,0.5);color:#fff;}
+.btn-signup{background:var(--orange);color:#fff;text-decoration:none;font-size:0.88rem;font-weight:600;padding:0.55rem 1.4rem;border-radius:50px;transition:all 0.2s;box-shadow:0 4px 20px rgba(240,125,35,0.35);}
+.btn-signup:hover{background:var(--orange2);transform:translateY(-1px);}
+
+/* HERO */
+#hero{min-height:100vh;background:var(--navy);display:flex;align-items:center;position:relative;overflow:hidden;padding-top:72px;}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 70% 30%,rgba(240,125,35,0.13) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 20% 80%,rgba(240,125,35,0.07) 0%,transparent 50%);}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:60px 60px;}
+.hero-inner{max-width:1200px;margin:0 auto;padding:5rem 6%;position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center;width:100%;}
+.hero-tag{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(240,125,35,0.12);border:1px solid rgba(240,125,35,0.25);color:var(--orange2);font-size:0.78rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:0.45rem 1rem;border-radius:50px;margin-bottom:1.8rem;}
+.hero-tag::before{content:'';width:6px;height:6px;background:var(--orange);border-radius:50%;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.hero-title{font-family:'Syne',sans-serif;font-size:clamp(2.8rem,4.5vw,4.5rem);font-weight:800;line-height:1.05;color:#fff;margin-bottom:1.5rem;letter-spacing:-2px;}
+.hero-title .accent{color:var(--orange);}
+.hero-title .outline{-webkit-text-stroke:1.5px rgba(255,255,255,0.35);color:transparent;display:block;}
+.hero-desc{color:rgba(255,255,255,0.55);font-size:1.05rem;line-height:1.8;max-width:480px;margin-bottom:2.5rem;font-weight:300;}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:3rem;}
+.hbtn-primary{background:var(--orange);color:#fff;padding:0.9rem 2.2rem;border-radius:50px;font-weight:600;font-size:0.95rem;text-decoration:none;transition:all 0.2s;box-shadow:0 8px 28px rgba(240,125,35,0.4);}
+.hbtn-primary:hover{background:var(--orange2);transform:translateY(-2px);}
+.hbtn-secondary{background:rgba(255,255,255,0.07);color:#fff;padding:0.9rem 2.2rem;border-radius:50px;font-weight:500;font-size:0.95rem;text-decoration:none;border:1px solid rgba(255,255,255,0.15);transition:all 0.2s;}
+.hbtn-secondary:hover{background:rgba(255,255,255,0.12);}
+.hero-trust{display:flex;align-items:center;gap:1rem;}
+.trust-av{display:flex;}
+.trust-av span{width:34px;height:34px;border-radius:50%;background:var(--orange);border:2px solid var(--navy);display:flex;align-items:center;justify-content:center;font-size:0.75rem;margin-left:-8px;color:#fff;font-weight:700;}
+.trust-av span:first-child{margin-left:0;}
+.trust-txt{font-size:0.8rem;color:rgba(255,255,255,0.45);line-height:1.4;}
+.trust-txt strong{color:#fff;display:block;}
+
+/* HERO CARD */
+.hero-right{position:relative;}
+.hero-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:2rem;backdrop-filter:blur(20px);animation:floatUp 4s ease-in-out infinite;}
+@keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.hc-label{font-size:0.72rem;color:rgba(255,255,255,0.35);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:1rem;}
+.hc-stats{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;}
+.hc-stat{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1.2rem;}
+.hc-val{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:700;color:#fff;}
+.hc-val span{color:var(--orange);}
+.hc-lbl{font-size:0.73rem;color:rgba(255,255,255,0.35);margin-top:0.2rem;}
+.hc-div{height:1px;background:rgba(255,255,255,0.07);margin-bottom:1.5rem;}
+.hc-feats{display:flex;flex-direction:column;gap:0.8rem;}
+.hc-feat{display:flex;align-items:center;gap:0.8rem;}
+.hc-feat-ico{width:32px;height:32px;background:rgba(240,125,35,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0;}
+.hc-feat-txt{font-size:0.82rem;color:rgba(255,255,255,0.55);}
+.hc-feat-txt strong{color:#fff;display:block;font-size:0.87rem;}
+.float-b1{position:absolute;top:-18px;right:-18px;background:var(--orange);color:#fff;border-radius:14px;padding:0.75rem 1rem;font-size:0.78rem;font-weight:600;box-shadow:0 8px 24px rgba(240,125,35,0.5);animation:floatB 3s ease-in-out infinite;}
+@keyframes floatB{0%,100%{transform:rotate(2deg)}50%{transform:translateY(-8px) rotate(-1deg)}}
+.float-b2{position:absolute;bottom:-14px;left:-14px;background:var(--navy2);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:14px;padding:0.75rem 1rem;font-size:0.78rem;font-weight:500;animation:floatB2 3.5s ease-in-out infinite;}
+@keyframes floatB2{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+/* COMMON SECTION */
+section{padding:7rem 6%;}
+.s-wrap{max-width:1200px;margin:0 auto;}
+.s-tag{display:inline-block;color:var(--orange);font-size:0.73rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:0.8rem;}
+.s-title{font-family:'Syne',sans-serif;font-size:clamp(1.9rem,3vw,2.8rem);font-weight:800;letter-spacing:-1px;line-height:1.15;margin-bottom:0.8rem;}
+.s-sub{color:var(--gray);font-size:1rem;line-height:1.7;max-width:540px;font-weight:300;}
+.accent-bar{width:40px;height:3px;background:var(--orange);border-radius:2px;margin-bottom:1rem;}
+
+/* PROBLEM */
+#problem{background:#fff;}
+.prob-layout{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center;}
+.prob-cards{display:flex;flex-direction:column;gap:1rem;}
+.prob-card{display:flex;gap:1.2rem;align-items:flex-start;padding:1.4rem 1.6rem;border-radius:16px;border:1px solid var(--border);background:var(--cream);transition:all 0.3s;position:relative;overflow:hidden;}
+.prob-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px;}
+.prob-card:nth-child(1)::before{background:#ef4444;}
+.prob-card:nth-child(2)::before{background:var(--orange);}
+.prob-card:nth-child(3)::before{background:#eab308;}
+.prob-card:hover{transform:translateX(6px);box-shadow:0 8px 24px rgba(0,0,0,0.08);}
+.prob-ico{font-size:1.5rem;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#fff;flex-shrink:0;}
+.prob-card h4{font-weight:700;font-size:0.95rem;margin-bottom:0.3rem;}
+.prob-card p{font-size:0.83rem;color:var(--gray);line-height:1.5;}
+
+/* SOLUTION */
+#solution{background:var(--navy);}
+#solution .s-title{color:#fff;}
+#solution .s-sub{color:rgba(255,255,255,0.45);}
+.sol-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem;}
+.sol-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:2rem;transition:all 0.3s;}
+.sol-card:hover{transform:translateY(-6px);border-color:rgba(240,125,35,0.3);background:rgba(240,125,35,0.05);}
+.sol-ico{font-size:2rem;margin-bottom:1.2rem;}
+.sol-card h3{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:0.6rem;}
+.sol-card p{font-size:0.84rem;color:rgba(255,255,255,0.45);line-height:1.6;}
+
+/* HOW IT WORKS */
+#how{background:var(--cream);}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin-top:3rem;position:relative;}
+.steps::before{content:'';position:absolute;top:28px;left:12%;right:12%;height:1px;background:repeating-linear-gradient(90deg,var(--orange) 0,var(--orange) 10px,transparent 10px,transparent 20px);z-index:0;}
+.step{text-align:center;position:relative;z-index:1;}
+.step-n{width:56px;height:56px;background:var(--navy);color:#fff;border-radius:50%;font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;border:3px solid var(--cream);transition:all 0.3s;}
+.step:hover .step-n{background:var(--orange);transform:scale(1.1);}
+.step h4{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:0.5rem;}
+.step p{font-size:0.83rem;color:var(--gray);line-height:1.55;}
+
+/* CONNECTIONS */
+#connections{background:#fff;}
+.conn-layout{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center;}
+.conn-items{display:flex;flex-direction:column;gap:1rem;}
+.conn-item{display:flex;gap:1.2rem;align-items:flex-start;padding:1.4rem;border-radius:16px;background:var(--cream);border:1px solid var(--border);transition:all 0.3s;}
+.conn-item:hover{border-color:var(--orange);background:#fff8f2;transform:translateX(4px);}
+.conn-chk{width:28px;height:28px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#16a34a;font-size:0.8rem;flex-shrink:0;margin-top:2px;font-weight:700;}
+.conn-item h4{color:var(--orange);font-weight:700;font-size:0.92rem;margin-bottom:0.3rem;}
+.conn-item p{font-size:0.83rem;color:var(--gray);line-height:1.5;}
+
+/* SAFETY */
+#safety{background:linear-gradient(135deg,#0d1b2a 0%,#1a2d44 100%);position:relative;overflow:hidden;}
+#safety::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(240,125,35,0.08) 0%,transparent 60%);}
+#safety .s-title{color:#fff;}
+#safety .s-sub{color:rgba(255,255,255,0.45);}
+.safety-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem;position:relative;z-index:1;}
+.saf-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:2rem;transition:all 0.3s;}
+.saf-card:hover{background:rgba(255,255,255,0.07);transform:translateY(-4px);border-color:rgba(240,125,35,0.3);}
+.saf-ico{font-size:2rem;margin-bottom:1.2rem;}
+.saf-card h3{font-family:'Syne',sans-serif;color:#fff;font-size:1rem;font-weight:700;margin-bottom:0.6rem;}
+.saf-card p{font-size:0.84rem;color:rgba(255,255,255,0.45);line-height:1.6;}
+
+/* AUDIENCE */
+#audience{background:var(--cream);}
+.aud-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem;}
+.aud-card{border-radius:20px;padding:2rem;border:1.5px solid var(--border);background:#fff;transition:all 0.3s;position:relative;overflow:hidden;}
+.aud-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--orange);transform:scaleX(0);transform-origin:left;transition:transform 0.3s;}
+.aud-card:hover::before{transform:scaleX(1);}
+.aud-card:hover{border-color:var(--orange);box-shadow:0 16px 40px rgba(240,125,35,0.1);transform:translateY(-4px);}
+.aud-ico{font-size:2.2rem;margin-bottom:1.2rem;}
+.aud-card h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:0.5rem;}
+.aud-card p{font-size:0.84rem;color:var(--gray);line-height:1.55;}
+
+/* REVENUE */
+#revenue{background:#fff;}
+.rev-layout{display:grid;grid-template-columns:1fr 1.6fr;gap:2rem;margin-top:3rem;}
+.rev-main{background:var(--navy);border-radius:24px;padding:3rem;text-align:center;position:relative;overflow:hidden;}
+.rev-main::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(240,125,35,0.2) 0%,transparent 60%);}
+.rev-lbl{font-size:0.78rem;color:rgba(255,255,255,0.35);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:0.5rem;position:relative;z-index:1;}
+.rev-pct{font-family:'Syne',sans-serif;font-size:6rem;font-weight:800;color:var(--orange);line-height:1;position:relative;z-index:1;}
+.rev-title{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;color:#fff;margin:0.5rem 0 1rem;position:relative;z-index:1;}
+.rev-note{font-size:0.82rem;color:rgba(255,255,255,0.35);position:relative;z-index:1;line-height:1.6;}
+.rev-upsells{background:var(--cream);border:1px solid var(--border);border-radius:24px;padding:2.5rem;}
+.rev-upsells h3{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;color:var(--orange);margin-bottom:1.5rem;}
+.rev-item{display:flex;gap:1rem;align-items:flex-start;padding:1rem 0;border-bottom:1px solid var(--border);}
+.rev-item:last-child{border-bottom:none;}
+.rev-chk{width:26px;height:26px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:#16a34a;flex-shrink:0;font-weight:700;margin-top:2px;}
+.rev-item h4{font-weight:700;color:var(--orange);font-size:0.9rem;margin-bottom:0.2rem;}
+.rev-item p{font-size:0.82rem;color:var(--gray);line-height:1.5;}
+
+/* GTM */
+#gtm{background:var(--navy);}
+#gtm .s-title{color:#fff;}
+#gtm .s-sub{color:rgba(255,255,255,0.45);}
+.gtm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem;}
+.gtm-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:2rem;text-align:center;transition:all 0.3s;}
+.gtm-card:hover{border-color:rgba(240,125,35,0.4);background:rgba(240,125,35,0.06);transform:translateY(-4px);}
+.gtm-num{width:52px;height:52px;background:var(--orange);color:#fff;border-radius:50%;font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;box-shadow:0 8px 24px rgba(240,125,35,0.4);}
+.gtm-card h3{font-family:'Syne',sans-serif;color:#fff;font-size:1rem;font-weight:700;margin-bottom:0.6rem;}
+.gtm-card p{font-size:0.84rem;color:rgba(255,255,255,0.45);line-height:1.6;}
+
+/* CTA */
+#cta{background:var(--orange);padding:6rem 6%;text-align:center;position:relative;overflow:hidden;}
+#cta::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(255,255,255,0.12) 0%,transparent 60%);}
+#cta h2{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:800;color:#fff;letter-spacing:-1px;margin-bottom:1rem;position:relative;z-index:1;}
+#cta p{color:rgba(255,255,255,0.8);font-size:1.05rem;margin-bottom:2.5rem;position:relative;z-index:1;}
+.cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
+.cta-wht{background:#fff;color:var(--orange);padding:0.9rem 2.2rem;border-radius:50px;font-weight:700;font-size:0.95rem;text-decoration:none;transition:all 0.2s;box-shadow:0 8px 28px rgba(0,0,0,0.15);}
+.cta-wht:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(0,0,0,0.2);}
+.cta-ol{background:transparent;color:#fff;padding:0.9rem 2.2rem;border-radius:50px;font-weight:600;font-size:0.95rem;text-decoration:none;border:2px solid rgba(255,255,255,0.5);transition:all 0.2s;}
+.cta-ol:hover{border-color:#fff;background:rgba(255,255,255,0.1);}
+
+/* CONTACT */
+#contact{background:var(--cream);}
+.cont-layout{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start;}
+.cont-dets{display:flex;flex-direction:column;gap:0.8rem;margin-top:2rem;}
+.cont-item{display:flex;align-items:center;gap:1rem;padding:1rem 1.3rem;background:#fff;border:1px solid var(--border);border-radius:12px;transition:all 0.2s;text-decoration:none;color:var(--navy);}
+.cont-item:hover{border-color:var(--orange);color:var(--orange);}
+.cont-item span{font-size:1.1rem;}
+.cont-form{display:flex;flex-direction:column;gap:1rem;}
+.cont-form input,.cont-form textarea{padding:0.9rem 1.2rem;border:1.5px solid var(--border);border-radius:12px;font-family:'Outfit',sans-serif;font-size:0.92rem;color:var(--navy);background:#fff;outline:none;transition:border-color 0.2s;}
+.cont-form input:focus,.cont-form textarea:focus{border-color:var(--orange);}
+.cont-form textarea{min-height:120px;resize:vertical;}
+.cont-form button{background:var(--navy);color:#fff;border:none;border-radius:50px;padding:0.9rem 2rem;font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.cont-form button:hover{background:var(--orange);transform:translateY(-2px);}
+
+/* FOOTER */
+footer{background:var(--navy);padding:2.5rem 6%;}
+.foot-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+.foot-logo{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#fff;}
+.foot-logo span{color:var(--orange);}
+.foot-links{display:flex;gap:2rem;}
+.foot-links a{color:rgba(255,255,255,0.35);text-decoration:none;font-size:0.85rem;transition:color 0.2s;}
+.foot-links a:hover{color:#fff;}
+footer p{color:rgba(255,255,255,0.2);font-size:0.78rem;}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity 0.7s ease,transform 0.7s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-l{opacity:0;transform:translateX(-30px);transition:opacity 0.7s ease,transform 0.7s ease;}
+.reveal-l.visible{opacity:1;transform:translateX(0);}
+.reveal-r{opacity:0;transform:translateX(30px);transition:opacity 0.7s ease,transform 0.7s ease;}
+.reveal-r.visible{opacity:1;transform:translateX(0);}
+
+/* MOBILE */
+@media(max-width:900px){
+  .hero-inner,.prob-layout,.conn-layout,.cont-layout{grid-template-columns:1fr;gap:2.5rem;}
+  .sol-grid,.safety-grid,.aud-grid,.gtm-grid{grid-template-columns:1fr;}
+  .steps{grid-template-columns:1fr 1fr;}
+  .steps::before{display:none;}
+  .rev-layout{grid-template-columns:1fr;}
+  .nav-links{display:none;}
+  .hero-right{display:none;}
+  .foot-inner{flex-direction:column;text-align:center;}
+  .foot-links{justify-content:center;}
+}
+</style>
+</head>
+<body>
+
+<nav id="navbar">
+  <a href="#" class="nav-logo">Stay<span>zee</span></a>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#solution">Solution</a></li>
+    <li><a href="#safety">Safety</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="pages/login.html" class="btn-login">Log In</a>
+    <a href="pages/login.html" class="btn-signup">Sign Up Free →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-tag">🌍 Community Travel Platform</div>
+      <h1 class="hero-title">
+        Unlock the <span class="accent">World,</span>
+        <span class="outline">Safe &amp; Shared.</span>
+      </h1>
+      <p class="hero-desc">Bridging the gap between expensive hotels and risky free stays through a trusted community network. Stay with verified locals who share your values.</p>
+      <div class="hero-btns">
+        <a href="pages/login.html" class="hbtn-primary">Start Your Journey →</a>
+        <a href="#how" class="hbtn-secondary">How It Works</a>
+      </div>
+      <div class="hero-trust">
+        <div class="trust-av">
+          <span>SK</span><span>MA</span><span>PR</span><span>RK</span>
+        </div>
+        <div class="trust-txt">
+          <strong>Join 500+ early members</strong>
+          Hosts &amp; Guests across India 🇮🇳
+        </div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="float-b1">🛡️ 100% Verified</div>
+      <div class="hero-card">
+        <div class="hc-label">✦ Why Stayzee?</div>
+        <div class="hc-stats">
+          <div class="hc-stat"><div class="hc-val">3<span>×</span></div><div class="hc-lbl">Cheaper than hotels</div></div>
+          <div class="hc-stat"><div class="hc-val">100<span>%</span></div><div class="hc-lbl">Verified users</div></div>
+          <div class="hc-stat"><div class="hc-val">24<span>/7</span></div><div class="hc-lbl">SOS support</div></div>
+          <div class="hc-stat"><div class="hc-val">20<span>%</span></div><div class="hc-lbl">Commission only</div></div>
+        </div>
+        <div class="hc-div"></div>
+        <div class="hc-feats">
+          <div class="hc-feat"><div class="hc-feat-ico">🪪</div><div class="hc-feat-txt"><strong>Aadhaar + AI Face Match</strong>No anonymous users ever</div></div>
+          <div class="hc-feat"><div class="hc-feat-ico">🤝</div><div class="hc-feat-txt"><strong>Community-First</strong>Match by values &amp; interests</div></div>
+          <div class="hc-feat"><div class="hc-feat-ico">💰</div><div class="hc-feat-txt"><strong>Host Upsells</strong>Meals, Experiences, Vehicles</div></div>
+        </div>
+      </div>
+      <div class="float-b2">📍 Launching in Chandigarh first</div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="s-wrap">
+    <div class="prob-layout">
+      <div class="reveal-l">
+        <span class="s-tag">The Problem</span>
+        <div class="accent-bar"></div>
+        <h2 class="s-title">The Budget Traveler's Dilemma</h2>
+        <p class="s-sub">Every budget traveler faces the same impossible choice — pay too much or risk too much. Stayzee changes that equation forever.</p>
+        <br><br>
+        <a href="pages/login.html" style="display:inline-flex;align-items:center;gap:0.5rem;background:var(--navy);color:#fff;padding:0.85rem 2rem;border-radius:50px;font-weight:600;font-size:0.9rem;text-decoration:none;transition:all 0.2s;" onmouseover="this.style.background='var(--orange)'" onmouseout="this.style.background='var(--navy)'">See Our Solution →</a>
+      </div>
+      <div class="prob-cards reveal-r">
+        <div class="prob-card">
+          <div class="prob-ico">💼</div>
+          <div><h4>Expensive Hotels</h4><p>Hotels drain your wallet, limiting your experiences and forcing shorter trips.</p></div>
+        </div>
+        <div class="prob-card">
+          <div class="prob-ico">😞</div>
+          <div><h4>Impersonal Stays</h4><p>Check in and out without a single real conversation. Commercial stays are lonely.</p></div>
+        </div>
+        <div class="prob-card">
+          <div class="prob-ico">⚠️</div>
+          <div><h4>Risky Alternatives</h4><p>"Cheap" often means unsafe or unverified. Trust is hard to find on budget platforms.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section id="solution">
+  <div class="s-wrap">
+    <div class="reveal" style="text-align:center">
+      <span class="s-tag">The Solution</span>
+      <div class="accent-bar" style="margin:0.8rem auto 1rem"></div>
+      <h2 class="s-title" style="color:#fff">Stayzee: The Trust Network</h2>
+      <p class="s-sub" style="margin:0 auto">We don't just list rooms — we connect people through verified identities, shared values, and authentic experiences.</p>
+    </div>
+    <div class="sol-grid">
+      <div class="sol-card reveal"><div class="sol-ico">👥</div><h3>Community-First</h3><p>Stay with locals who share your interests. We connect people, not just properties.</p></div>
+      <div class="sol-card reveal"><div class="sol-ico">🏷️</div><h3>Affordable</h3><p>Access safe, verified stays at a fraction of standard hotel prices. Travel more, spend less.</p></div>
+      <div class="sol-card reveal"><div class="sol-ico">❤️</div><h3>Authentic</h3><p>Gain local insights and real conversations, not just a key card and a checkout time.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="s-wrap">
+    <div class="reveal" style="text-align:center">
+      <span class="s-tag">The Process</span>
+      <div class="accent-bar" style="margin:0.8rem auto 1rem"></div>
+      <h2 class="s-title">A Simple, Safe Process</h2>
+      <p class="s-sub" style="margin:0 auto">Four steps to your next authentic stay.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal"><div class="step-n">1</div><h4>Verify</h4><p>Mandatory Govt. ID &amp; Selfie Match for 100% of users — Hosts &amp; Guests.</p></div>
+      <div class="step reveal"><div class="step-n">2</div><h4>Match</h4><p>Browse profiles, not just properties. Check shared interests &amp; house rules.</p></div>
+      <div class="step reveal"><div class="step-n">3</div><h4>Connect</h4><p>Chat securely in-app to break the ice before you ever book.</p></div>
+      <div class="step reveal"><div class="step-n">4</div><h4>Stay</h4><p>Enjoy the stay, share a meal, and build reputation through reviews.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONNECTIONS -->
+<section id="connections">
+  <div class="s-wrap">
+    <div class="conn-layout">
+      <div class="reveal-l">
+        <span class="s-tag">Authentic Connections</span>
+        <div class="accent-bar"></div>
+        <h2 class="s-title">Unlocking Authentic Connections</h2>
+        <p class="s-sub">Beyond just a room — Stayzee creates real bonds between hosts and guests through shared culture and local wisdom.</p>
+      </div>
+      <div class="conn-items reveal-r">
+        <div class="conn-item"><div class="conn-chk">✓</div><div><h4>Culinary Earnings</h4><p>Hosts can offer kitchen access or cook home-made dinners, creating a bond and earning extra income.</p></div></div>
+        <div class="conn-item"><div class="conn-chk">✓</div><div><h4>Cultural Compatibility</h4><p>Hosts can choose guests who share their preferred religious or cultural values.</p></div></div>
+        <div class="conn-item"><div class="conn-chk">✓</div><div><h4>Local Wisdom</h4><p>Hosts share guides to hidden gems and local secrets, making the trip truly immersive.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SAFETY -->
+<section id="safety">
+  <div class="s-wrap" style="position:relative;z-index:1">
+    <div class="reveal" style="text-align:center">
+      <span class="s-tag" style="color:var(--orange2)">Trust &amp; Safety</span>
+      <div class="accent-bar" style="margin:0.8rem auto 1rem"></div>
+      <h2 class="s-title">Safety is Our Foundation</h2>
+      <p class="s-sub" style="margin:0 auto">Every feature is built so every traveller feels fully protected, no matter where they go.</p>
+    </div>
+    <div class="safety-grid">
+      <div class="saf-card reveal"><div class="saf-ico">🪪</div><h3>100% Verification</h3><p>Aadhaar/Passport integration + AI Facial Recognition. No anonymous users allowed on the platform.</p></div>
+      <div class="saf-card reveal"><div class="saf-ico">♀️</div><h3>Comfort Filters</h3><p>Female guests can filter for female-only hosts to ensure complete comfort and peace of mind.</p></div>
+      <div class="saf-card reveal"><div class="saf-ico">📞</div><h3>24/7 SOS Support</h3><p>In-app SOS button shares live location instantly. Dedicated helpline for any emergency.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- AUDIENCE -->
+<section id="audience">
+  <div class="s-wrap">
+    <div class="reveal" style="text-align:center">
+      <span class="s-tag">Our Travellers</span>
+      <div class="accent-bar" style="margin:0.8rem auto 1rem"></div>
+      <h2 class="s-title">Capturing the Underserved</h2>
+      <p class="s-sub" style="margin:0 auto">Stayzee serves the travellers that traditional platforms leave behind.</p>
+    </div>
+    <div class="aud-grid">
+      <div class="aud-card reveal"><div class="aud-ico">🎓</div><h3>The Exam Nomad</h3><p>Students traveling for exams/interviews seeking affordable, quiet, trustworthy stays in new cities.</p></div>
+      <div class="aud-card reveal"><div class="aud-ico">🧭</div><h3>The Solo Explorer</h3><p>Travelers seeking safety in numbers and trusted local advice to navigate unfamiliar destinations.</p></div>
+      <div class="aud-card reveal"><div class="aud-ico">📸</div><h3>The Experience Seeker</h3><p>Travelers who value memories, stories, and authenticity over hotel amenities and impersonal service.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- REVENUE -->
+<section id="revenue">
+  <div class="s-wrap">
+    <div class="reveal">
+      <span class="s-tag">Business Model</span>
+      <div class="accent-bar"></div>
+      <h2 class="s-title">Clear Path to Revenue</h2>
+      <p class="s-sub">Simple, fair, and designed to grow with the community.</p>
+    </div>
+    <div class="rev-layout reveal">
+      <div class="rev-main">
+        <div class="rev-lbl">Primary Revenue</div>
+        <div class="rev-pct">20%</div>
+        <div class="rev-title">Commission</div>
+        <div class="rev-note">Per successful booking.<br>Free host listing = Rapid supply growth.</div>
+      </div>
+      <div class="rev-upsells">
+        <h3>Host Upsells</h3>
+        <div class="rev-item"><div class="rev-chk">✓</div><div><h4>Home Meals</h4><p>Hosts earn extra by providing dinner or kitchen access for guests.</p></div></div>
+        <div class="rev-item"><div class="rev-chk">✓</div><div><h4>Experiences</h4><p>Monetizing local tours and activities hosted by locals in their city.</p></div></div>
+        <div class="rev-item"><div class="rev-chk">✓</div><div><h4>Vehicle Rental</h4><p>Hosts rent out bikes/cars with verified documentation for seamless local travel.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GO TO MARKET -->
+<section id="gtm">
+  <div class="s-wrap">
+    <div class="reveal" style="text-align:center">
+      <span class="s-tag" style="color:var(--orange2)">Go-to-Market</span>
+      <div class="accent-bar" style="margin:0.8rem auto 1rem"></div>
+      <h2 class="s-title" style="color:#fff">Go-to-Market Strategy</h2>
+      <p class="s-sub" style="margin:0 auto">Three phases to dominate the Indian travel market.</p>
+    </div>
+    <div class="gtm-grid">
+      <div class="gtm-card reveal"><div class="gtm-num">1</div><h3>Phase 1: Pilot</h3><p>Launch in Chandigarh. Recruit 50 hosts with 0% commission to build density.</p></div>
+      <div class="gtm-card reveal"><div class="gtm-num">2</div><h3>Phase 2: Students</h3><p>Target the "Exam Corridor." Students have spare beds and need cheap travel.</p></div>
+      <div class="gtm-card reveal"><div class="gtm-num">3</div><h3>Phase 3: Scale</h3><p>Replicate the playbook in 10 key Tier-2 cities across India.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="s-wrap">
+    <h2 class="reveal">Making every trip an<br>opportunity for connection.</h2>
+    <p class="reveal">Join Stayzee today — it's completely free to sign up.</p>
+    <div class="cta-btns reveal">
+      <a href="pages/login.html" class="cta-wht">Get Started Free →</a>
+      <a href="pages/explore.html" class="cta-ol">Explore Stays</a>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="s-wrap">
+    <div class="cont-layout">
+      <div class="reveal-l">
+        <span class="s-tag">Get in Touch</span>
+        <div class="accent-bar"></div>
+        <h2 class="s-title">Let's Build Something Together</h2>
+        <p class="s-sub">Interested in hosting, investing, or partnering with Stayzee?</p>
+        <div class="cont-dets">
+          <div class="cont-item"><span>👤</span><span style="font-weight:600">Sourav Kumar</span></div>
+          <a href="mailto:sourav.works2718@gmail.com" class="cont-item"><span>✉️</span>sourav.works2718@gmail.com</a>
+          <a href="tel:+919304090553" class="cont-item"><span>📱</span>+91 9304090553</a>
+        </div>
+      </div>
+      <div class="reveal-r">
+        <div class="cont-form">
+          <input type="text" placeholder="Your Name">
+          <input type="email" placeholder="Your Email">
+          <input type="text" placeholder="Subject (Investor / Partner / Host / Other)">
+          <textarea placeholder="Your message..."></textarea>
+          <button type="button" onclick="alert('Message sent! We will get back to you soon 🎉')">Send Message →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-inner">
+    <div class="foot-logo">Stay<span>zee</span></div>
+    <div class="foot-links">
+      <a href="#problem">About</a>
+      <a href="#how">How It Works</a>
+      <a href="#safety">Safety</a>
+      <a href="pages/login.html">Login</a>
+      <a href="pages/explore.html">Explore</a>
+    </div>
+    <p>© 2025 Stayzee · Sourav Kumar · sourav.works2718@gmail.com</p>
+  </div>
+</footer>
+
+<script>
+// Scroll reveal
+const obs = new IntersectionObserver(entries => {
+  entries.forEach((e,i) => {
+    if(e.isIntersecting) setTimeout(()=>e.target.classList.add('visible'), i*80);
+  });
+}, {threshold:0.1});
+document.querySelectorAll('.reveal,.reveal-l,.reveal-r').forEach(el=>obs.observe(el));
+
+// Navbar shadow on scroll
+window.addEventListener('scroll', ()=>{
+  document.getElementById('navbar').style.boxShadow = window.scrollY > 20 ? '0 4px 30px rgba(0,0,0,0.3)' : 'none';
+});
+</script>
+</body>
+</html>

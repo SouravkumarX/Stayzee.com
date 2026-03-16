@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Host Bookings — Stayzee</title>
+<link rel="stylesheet" href="../css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { padding-top:66px; background:var(--cream); }
+  .wrap { max-width:950px; margin:0 auto; padding:2.5rem 5%; }
+  .request-card { background:var(--white); border:1px solid var(--border); border-radius:16px; padding:1.5rem; margin-bottom:1.2rem; display:grid; grid-template-columns:1fr auto; gap:1.5rem; align-items:start; transition:box-shadow 0.2s; }
+  .request-card:hover { box-shadow:var(--shadow); }
+  .guest-row { display:flex; align-items:center; gap:0.8rem; margin-bottom:0.8rem; }
+  .guest-avatar { width:46px; height:46px; border-radius:50%; object-fit:cover; border:2px solid var(--orange); }
+  .guest-name { font-weight:700; font-size:0.97rem; }
+  .guest-sub  { font-size:0.8rem; color:var(--gray); }
+  .request-details { display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:0.8rem; }
+  .detail-item .label { font-size:0.72rem; color:var(--gray); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+  .detail-item .value { font-weight:600; font-size:0.9rem; margin-top:0.15rem; }
+  .request-message { background:var(--cream); border-radius:8px; padding:0.8rem 1rem; font-size:0.85rem; color:var(--gray); font-style:italic; margin-bottom:0.8rem; border-left:3px solid var(--orange); }
+  .action-group { display:flex; flex-direction:column; gap:0.5rem; min-width:130px; }
+  .earnings-banner { background:linear-gradient(135deg,var(--navy),#243660); border-radius:16px; padding:1.5rem 2rem; margin-bottom:2rem; display:flex; justify-content:space-around; }
+  .earn-stat { text-align:center; }
+  .earn-val { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:700; color:var(--white); }
+  .earn-lbl { font-size:0.78rem; color:rgba(255,255,255,0.6); margin-top:0.2rem; }
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<nav class="topnav">
+  <a href="../index.html" class="nav-logo">Stay<span>zee</span></a>
+  <div class="nav-right">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="host.html" class="nav-link">My Listings</a>
+    <button class="nav-btn outline" onclick="signOut()">Log Out</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <h1 class="page-title">Host Bookings</h1>
+  <p class="page-sub">Review and manage guest booking requests</p>
+  <div class="earnings-banner">
+    <div class="earn-stat"><div class="earn-val" id="e-pending">—</div><div class="earn-lbl">Pending</div></div>
+    <div class="earn-stat"><div class="earn-val" id="e-confirmed">—</div><div class="earn-lbl">Confirmed</div></div>
+    <div class="earn-stat"><div class="earn-val" id="e-earnings">—</div><div class="earn-lbl">Total Earned</div></div>
+    <div class="earn-stat"><div class="earn-val" id="e-completed">—</div><div class="earn-lbl">Completed</div></div>
+  </div>
+  <div class="booking-tabs" style="display:flex;gap:0;margin-bottom:2rem;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;width:fit-content;background:var(--white)">
+    <button class="booking-tab active" style="padding:0.65rem 1.4rem;font-size:0.88rem;font-weight:600;cursor:pointer;border:none;background:var(--navy);color:var(--white);font-family:'DM Sans',sans-serif" onclick="filterTab('all',this)">All</button>
+    <button class="booking-tab" style="padding:0.65rem 1.4rem;font-size:0.88rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--gray);font-family:'DM Sans',sans-serif;transition:all 0.2s" onclick="filterTab('pending',this)">Pending</button>
+    <button class="booking-tab" style="padding:0.65rem 1.4rem;font-size:0.88rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--gray);font-family:'DM Sans',sans-serif;transition:all 0.2s" onclick="filterTab('confirmed',this)">Confirmed</button>
+    <button class="booking-tab" style="padding:0.65rem 1.4rem;font-size:0.88rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--gray);font-family:'DM Sans',sans-serif;transition:all 0.2s" onclick="filterTab('completed',this)">Completed</button>
+  </div>
+  <div id="requests-list"><div class="spinner"></div></div>
+</div>
+
+<script src="../js/supabase.js"></script>
+<script>
+  function showToast(msg,type='info'){const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;document.getElementById('toast-container').appendChild(t);setTimeout(()=>t.remove(),3500);}
+
+  let allBookings=[], currentUser=null;
+
+  function statusBadge(s){const m={pending:'badge-warning',confirmed:'badge-success',cancelled:'badge-danger',completed:'badge-info'};return `<span class="badge ${m[s]||'badge-info'}">${s}</span>`;}
+
+  function filterTab(status, btn) {
+    document.querySelectorAll('.booking-tab').forEach(t=>{t.style.background='transparent';t.style.color='var(--gray)';});
+    btn.style.background='var(--navy)'; btn.style.color='var(--white)';
+    render(status==='all'?allBookings:allBookings.filter(b=>b.status===status));
+  }
+
+  async function updateStatus(id, status) {
+    const { error } = await updateBookingStatus(id, status);
+    if (error) showToast(error.message,'error');
+    else { showToast(`Booking ${status}!`, status==='confirmed'?'success':'info'); loadBookings(); }
+  }
+
+  function render(bookings) {
+    const container = document.getElementById('requests-list');
+    if (!bookings||bookings.length===0) {
+      container.innerHTML=`<div style="text-align:center;padding:4rem;color:var(--gray)"><div style="font-size:4rem;margin-bottom:1rem">📭</div><p>No bookings in this category.</p></div>`;
+      return;
+    }
+    container.innerHTML = bookings.map(b => {
+      const g = b.profiles||{};
+      const nights = Math.max(0,(new Date(b.check_out)-new Date(b.check_in))/(1000*60*60*24));
+      return `<div class="request-card">
+        <div>
+          <div class="guest-row">
+            <img src="${g.avatar_url||`https://ui-avatars.com/api/?name=${encodeURIComponent(g.full_name||'G')}&background=e8820c&color=fff`}" class="guest-avatar">
+            <div><div class="guest-name">${g.full_name||'Guest'}</div><div class="guest-sub">⭐ Verified Guest</div></div>
+            <div style="margin-left:auto">${statusBadge(b.status)}</div>
+          </div>
+          <div class="request-details">
+            <div class="detail-item"><div class="label">Property</div><div class="value">${b.listings?.title||'—'}</div></div>
+            <div class="detail-item"><div class="label">Check-in</div><div class="value">${b.check_in}</div></div>
+            <div class="detail-item"><div class="label">Check-out</div><div class="value">${b.check_out}</div></div>
+            <div class="detail-item"><div class="label">Nights</div><div class="value">${nights}</div></div>
+            <div class="detail-item"><div class="label">Guests</div><div class="value">${b.guests}</div></div>
+            <div class="detail-item"><div class="label">Earnings</div><div class="value" style="color:var(--orange)">₹${(parseFloat(b.total_price)*0.8).toLocaleString('en-IN')}</div></div>
+          </div>
+          ${b.message?`<div class="request-message">"${b.message}"</div>`:''}
+        </div>
+        <div class="action-group">
+          ${b.status==='pending'?`
+            <button class="btn btn-primary btn-sm" onclick="updateStatus('${b.id}','confirmed')">✓ Accept</button>
+            <button class="btn btn-danger btn-sm" onclick="updateStatus('${b.id}','cancelled')">✗ Decline</button>
+          `:''}
+          ${b.status==='confirmed'?`<button class="btn btn-outline btn-sm" onclick="updateStatus('${b.id}','completed')">Mark Complete</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function loadBookings() {
+    currentUser = await requireAuth('../pages/login.html');
+    if (!currentUser) return;
+    const { data, error } = await getHostBookings(currentUser.id);
+    if (error) { showToast(error.message,'error'); return; }
+    allBookings = data||[];
+    // Stats
+    document.getElementById('e-pending').textContent = allBookings.filter(b=>b.status==='pending').length;
+    document.getElementById('e-confirmed').textContent = allBookings.filter(b=>b.status==='confirmed').length;
+    document.getElementById('e-completed').textContent = allBookings.filter(b=>b.status==='completed').length;
+    const earned = allBookings.filter(b=>b.status==='completed').reduce((s,b)=>s+parseFloat(b.total_price)*0.8,0);
+    document.getElementById('e-earnings').textContent = '₹'+earned.toLocaleString('en-IN');
+    render(allBookings);
+  }
+
+  loadBookings();
+</script>
+</body>
+</html>
